@@ -20,6 +20,7 @@ import naver_detail
 import naver_us
 import supabase_io
 import us_universe
+import yahoo
 
 KST = ZoneInfo("Asia/Seoul")
 WORKERS = 8
@@ -107,7 +108,7 @@ def main() -> int:
     # ── Stage 3: 미국 상장 ETF (큐레이션) ──
     if os.environ.get("NO_US") != "1":
         tickers = us_universe.US_ETFS
-        print(f"[stage3] 미국 ETF 수집 {len(tickers)}종목 (workers={WORKERS})")
+        print(f"[stage3] 미국 ETF 시세 수집 {len(tickers)}종목 (workers={WORKERS})")
         us_metas, us_quotes, us_details = [], [], []
         with ThreadPoolExecutor(max_workers=WORKERS) as ex:
             for res in ex.map(lambda tc: naver_us.fetch_us(tc[0], tc[1], trade_date), tickers):
@@ -116,10 +117,35 @@ def main() -> int:
                 us_metas.append(res["meta"])
                 us_quotes.append(res["quote"])
                 us_details.append(res["detail"])
-        print(f"[stage3] 성공 {len(us_quotes)}/{len(tickers)}")
+        print(f"[stage3] 네이버 시세 {len(us_quotes)}/{len(tickers)}")
+
+        # Yahoo 보강: 구성종목·섹터·보수 (비공식 API라 저동시성 + graceful skip)
+        us_holdings = []
+        if os.environ.get("NO_YAHOO") != "1" and us_metas:
+            meta_by = {m["code"]: m for m in us_metas}
+            detail_by = {d["code"]: d for d in us_details}
+            us_codes = list(meta_by.keys())
+            print(f"[stage3] Yahoo 보강 {len(us_codes)}종목 (workers=3)")
+            ok = 0
+            with ThreadPoolExecutor(max_workers=3) as ex:
+                for code, y in zip(us_codes, ex.map(lambda c: yahoo.fetch_holdings(c, trade_date), us_codes)):
+                    if not y:
+                        continue
+                    ok += 1
+                    us_holdings.extend(y["holdings"])
+                    if y["sectors"]:
+                        detail_by[code]["sector_portfolio"] = y["sectors"]
+                    if y["fee_pct"] is not None:
+                        meta_by[code]["fee_pct"] = y["fee_pct"]
+            print(f"[stage3] Yahoo {ok}/{len(us_codes)}, 구성종목 {len(us_holdings)}행")
+
         supabase_io.upsert("etf_meta", us_metas, "code")
         supabase_io.upsert("etf_daily_quote", us_quotes, "code,date")
         supabase_io.upsert("etf_detail", us_details, "code")
+        if us_holdings:
+            us_codes = [m["code"] for m in us_metas]
+            supabase_io.delete_in("etf_holding", "code", us_codes)
+            supabase_io.upsert("etf_holding", us_holdings, "code,stock_code,stock_name")
         print("[stage3] 적재 완료")
 
     print("[done]")

@@ -82,12 +82,12 @@ export function DetailPage() {
         <Grid>
           {isUS ? (
             <>
+              <Cell label="총보수" value={meta.fee_pct != null ? `${meta.fee_pct}%` : '-'} />
               <Cell label="분배수익률" value={detail?.dividend_yield != null ? `${detail.dividend_yield}%` : '-'} />
               <Cell label="주당 분배금" value={detail?.dividend_per_share != null ? `$${detail.dividend_per_share}` : '-'} />
               <Cell label="시가총액" value={marketCap(quote?.market_cap, cur)} />
               <Cell label="거래대금" value={marketCap(quote?.trading_value, cur)} />
               <Cell label="거래량" value={fmt(quote?.volume)} />
-              <Cell label="구분" value={meta.category ?? '-'} small />
             </>
           ) : (
             <>

@@ -89,6 +89,7 @@ def fetch_us(ticker: str, category: str, as_of: str) -> dict | None:
         "currency": "USD",
         "category": category,
         "issuer": None,
+        "fee_pct": None,  # Yahoo 보강에서 채움(없으면 null). 배치 키 균일 위해 항상 포함.
     }
     quote = {
         "code": ticker,

@@ -52,3 +52,20 @@ def delete_all(table: str) -> None:
     r = requests.delete(endpoint, headers=headers, timeout=60)
     if r.status_code >= 300:
         raise RuntimeError(f"delete 실패 table={table} status={r.status_code}: {r.text[:200]}")
+
+
+def delete_in(table: str, column: str, values: list[str]) -> None:
+    """column IN (values) 인 행 삭제. (예: 미국 종목 holdings 재적재 전)"""
+    if not values:
+        return
+    url, key = _config()
+    headers = {"apikey": key, "Authorization": f"Bearer {key}", "Prefer": "return=minimal"}
+    for i in range(0, len(values), CHUNK):
+        batch = values[i : i + CHUNK]
+        in_list = "(" + ",".join(batch) + ")"
+        endpoint = f"{url}/rest/v1/{table}?{column}=in.{in_list}"
+        r = requests.delete(endpoint, headers=headers, timeout=60)
+        if r.status_code >= 300:
+            raise RuntimeError(
+                f"delete_in 실패 table={table} status={r.status_code}: {r.text[:200]}"
+            )
