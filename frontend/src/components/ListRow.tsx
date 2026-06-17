@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { pct, price, signColor } from '@/lib/format';
+import { maybeShowInterstitial } from '@/lib/interstitial';
 import type { EtfListRow } from '@/types/etf';
 
 export function ListRow({ row }: { row: EtfListRow }) {
@@ -9,7 +10,10 @@ export function ListRow({ row }: { row: EtfListRow }) {
   const isUS = row.etf_meta?.market === 'US';
   return (
     <button
-      onClick={() => navigate(`/etf/${row.code}`)}
+      onClick={() => {
+        navigate(`/etf/${row.code}`);
+        maybeShowInterstitial(); // 빈도 조건 충족 시에만 전면 광고
+      }}
       style={{
         display: 'flex',
         width: '100%',

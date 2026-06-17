@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { ListRow } from '@/components/ListRow';
+import { BannerSlot } from '@/components/BannerSlot';
 import { useAsync } from '@/hooks/useAsync';
 import { fetchTopList, type ListMode } from '@/lib/queries';
 import { isSupabaseConfigured } from '@/lib/supabase';
@@ -18,7 +19,7 @@ export function HomePage() {
 
   return (
     <div style={{ padding: '20px 16px 88px', maxWidth: 560, margin: '0 auto' }}>
-      <h1 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 2px', color: '#191f28' }}>ETF 돋보기</h1>
+      <h1 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 2px', color: '#191f28' }}>ETF 인사이트</h1>
       <p style={{ fontSize: 13, color: '#8b95a1', margin: '0 0 16px' }}>
         {market === 'KR' ? '국내 ETF · 종가 기준 괴리율' : '미국 상장 ETF · 시세·배당'}
       </p>
@@ -50,7 +51,7 @@ export function HomePage() {
               boxShadow: market === m ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
             }}
           >
-            {m === 'KR' ? '🇰🇷 국내' : '🇺🇸 미국'}
+            {m === 'KR' ? '국내' : '미국'}
           </button>
         ))}
       </div>
@@ -81,7 +82,12 @@ export function HomePage() {
       )}
       {loading && <p style={{ color: '#8b95a1', padding: '20px 0' }}>불러오는 중…</p>}
       {error && <Notice>오류: {error}</Notice>}
-      {data?.map((row) => <ListRow key={row.code} row={row} />)}
+      {data?.map((row, i) => (
+        <Fragment key={row.code}>
+          <ListRow row={row} />
+          {i === 6 && <BannerSlot />}
+        </Fragment>
+      ))}
     </div>
   );
 }

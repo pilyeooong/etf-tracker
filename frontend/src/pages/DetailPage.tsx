@@ -1,4 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom';
+import { BannerSlot } from '@/components/BannerSlot';
 import { useAsync } from '@/hooks/useAsync';
 import { fetchDetailBundle } from '@/lib/queries';
 import { fmt, marketCap, pct, price, signColor, won억 } from '@/lib/format';
@@ -54,7 +55,7 @@ export function DetailPage() {
       <div style={{ marginBottom: 6 }}>
         <h1 style={{ fontSize: 20, fontWeight: 800, margin: 0, color: '#191f28' }}>{meta.name}</h1>
         <div style={{ fontSize: 13, color: '#8b95a1', marginTop: 2 }}>
-          {meta.code} · {isUS ? '🇺🇸 미국 상장' : meta.issuer ?? '-'}
+          {meta.code} · {isUS ? '미국 상장' : meta.issuer ?? '-'}
           {meta.base_index ? ` · ${meta.base_index}` : isUS && meta.category ? ` · ${meta.category}` : ''}
         </div>
       </div>
@@ -145,6 +146,8 @@ export function DetailPage() {
           />
         </Section>
       )}
+
+      <BannerSlot />
 
       <p style={{ fontSize: 11, color: '#b0b8c1', lineHeight: 1.6, marginTop: 20 }}>
         모든 수치는 참고용 추정치이며 실제와 다를 수 있습니다. 본 정보는 투자 권유가 아니며, 투자 판단의
