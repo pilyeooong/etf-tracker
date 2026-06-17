@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<style>
+  html, body { margin: 0; padding: 0; }
+  body {
+    width: 600px;
+    height: 600px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(120% 120% at 30% 20%, #4A90FF 0%, #3182F6 45%, #1B64DA 100%);
+    overflow: hidden;
+  }
+  /* 바차트(ascending) + 돋보기 = ETF를 자세히 들여다본다 */
+  svg { display: block; }
+  .bar { fill: #FFFFFF; }
+  .bar.dim { fill: rgba(255,255,255,0.55); }
+  .lens-ring { fill: none; stroke: #FFFFFF; stroke-width: 34; }
+  .lens-glass { fill: rgba(255,255,255,0.16); }
+  .lens-handle { stroke: #FFFFFF; stroke-width: 40; stroke-linecap: round; }
+</style>
+</head>
+<body>
+  <svg width="380" height="380" viewBox="0 0 380 380" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- 오름차순 바차트 (좌하단) -->
+    <rect class="bar dim" x="44"  y="262" width="54" height="92"  rx="15"/>
+    <rect class="bar dim" x="113" y="222" width="54" height="132" rx="15"/>
+    <rect class="bar"     x="182" y="184" width="54" height="170" rx="15"/>
+    <!-- 돋보기 (우상단, 대각선 분리) -->
+    <circle class="lens-glass" cx="288" cy="106" r="74"/>
+    <circle class="lens-ring"  cx="288" cy="106" r="74"/>
+    <line class="lens-handle" x1="340" y1="158" x2="362" y2="180"/>
+  </svg>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<style>
+  html, body { margin: 0; padding: 0; }
+  body {
+    width: 1932px; height: 828px;
+    display: flex; align-items: center; gap: 80px;
+    padding: 0 110px; box-sizing: border-box;
+    background: linear-gradient(135deg, #EEF4FF 0%, #DCE7FF 100%);
+    font-family: 'Apple SD Gothic Neo', Pretendard, -apple-system, BlinkMacSystemFont, sans-serif;
+    overflow: hidden;
+  }
+  .left { display: flex; flex-direction: column; justify-content: center; flex: 1; }
+  .logo {
+    width: 150px; height: 150px; border-radius: 34px; margin-bottom: 40px;
+    box-shadow: 0 16px 40px rgba(27,100,218,0.28);
+  }
+  .badge {
+    display: inline-block; align-self: flex-start;
+    background: #fff; color: #3182F6; font-weight: 800; font-size: 30px;
+    padding: 12px 24px; border-radius: 999px; margin-bottom: 28px;
+    box-shadow: 0 4px 14px rgba(27,100,218,0.12);
+  }
+  h1 { font-size: 104px; font-weight: 900; color: #191f28; margin: 0 0 22px; letter-spacing: -3px; }
+  .sub { font-size: 42px; color: #4e5968; font-weight: 600; margin: 0 0 40px; }
+  .chips { display: flex; gap: 16px; }
+  .chip {
+    background: rgba(49,130,246,0.10); color: #1B64DA; font-weight: 700; font-size: 32px;
+    padding: 14px 28px; border-radius: 16px;
+  }
+  /* 우측 결과 카드 (상세 미리보기) */
+  .card {
+    width: 620px; background: #fff; border-radius: 36px; padding: 48px 44px;
+    box-shadow: 0 30px 70px rgba(27,100,218,0.22);
+  }
+  .card .name { font-size: 40px; font-weight: 800; color: #191f28; }
+  .card .code { font-size: 26px; color: #8b95a1; margin-top: 6px; }
+  .card .price { font-size: 64px; font-weight: 900; color: #191f28; margin: 26px 0 4px; }
+  .card .chg { font-size: 30px; font-weight: 700; color: #1a73e8; }
+  .card .row { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; }
+  .card .bar-wrap { margin-top: 30px; }
+  .card .hname { font-size: 28px; color: #191f28; font-weight: 600; }
+  .card .hval { font-size: 28px; color: #4e5968; font-weight: 700; }
+  .card .track { height: 12px; background: #f2f4f6; border-radius: 6px; margin-top: 10px; overflow: hidden; }
+  .card .fill { height: 100%; background: #3182F6; border-radius: 6px; }
+  .gap { height: 22px; }
+</style>
+</head>
+<body>
+  <div class="left">
+    <img class="logo" src="logo.png" />
+    <span class="badge">국내 + 미국 ETF</span>
+    <h1>ETF 돋보기</h1>
+    <p class="sub">종가·괴리율부터 구성종목까지 한눈에</p>
+    <div class="chips">
+      <span class="chip">괴리율</span>
+      <span class="chip">구성종목</span>
+      <span class="chip">섹터 비중</span>
+      <span class="chip">분배수익률</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="name">KODEX 200</div>
+    <div class="code">069500 · 삼성자산운용</div>
+    <div class="price">139,060원</div>
+    <div class="chg">+2.34% · 괴리율 -0.17%</div>
+    <div class="bar-wrap">
+      <div class="row"><span class="hname">삼성전자</span><span class="hval">34.2%</span></div>
+      <div class="track"><div class="fill" style="width:88%"></div></div>
+      <div class="gap"></div>
+      <div class="row"><span class="hname">SK하이닉스</span><span class="hval">27.7%</span></div>
+      <div class="track"><div class="fill" style="width:71%"></div></div>
+      <div class="gap"></div>
+      <div class="row"><span class="hname">삼성전기</span><span class="hval">2.5%</span></div>
+      <div class="track"><div class="fill" style="width:18%"></div></div>
+    </div>
+  </div>
+</body>
+</html>

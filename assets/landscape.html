@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<style>
+  html, body { margin: 0; padding: 0; }
+  body {
+    width: 1504px; height: 741px;
+    display: flex; align-items: center; box-sizing: border-box;
+    padding: 0 70px; gap: 40px;
+    background: linear-gradient(135deg, #EEF4FF 0%, #DCE7FF 100%);
+    font-family: 'Apple SD Gothic Neo', Pretendard, -apple-system, BlinkMacSystemFont, sans-serif;
+    overflow: hidden;
+  }
+  .left { flex: 1; }
+  .logo { width: 116px; height: 116px; border-radius: 26px; margin-bottom: 30px;
+          box-shadow: 0 12px 30px rgba(27,100,218,0.26); }
+  h1 { font-size: 70px; font-weight: 900; color: #191f28; margin: 0 0 20px; letter-spacing: -2px; line-height: 1.15; }
+  .sub { font-size: 30px; color: #4e5968; font-weight: 600; margin: 0 0 30px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 12px; max-width: 460px; }
+  .chip { background: rgba(49,130,246,0.10); color: #1B64DA; font-weight: 700; font-size: 24px;
+          padding: 11px 20px; border-radius: 14px; }
+  .phones { display: flex; gap: 34px; align-items: center; }
+  .phone {
+    width: 360px; border-radius: 30px; overflow: hidden;
+    box-shadow: 0 26px 60px rgba(27,100,218,0.24); border: 6px solid #fff; background: #fff;
+  }
+  .phone img { display: block; width: 100%; }
+</style>
+</head>
+<body>
+  <div class="left">
+    <img class="logo" src="logo.png" />
+    <h1>국내부터 미국까지<br/>ETF를 돋보기처럼</h1>
+    <p class="sub">종가·괴리율·구성종목을 한눈에</p>
+    <div class="chips">
+      <span class="chip">실시간 종가</span>
+      <span class="chip">괴리율</span>
+      <span class="chip">구성종목 TOP10</span>
+      <span class="chip">섹터 비중</span>
+    </div>
+  </div>
+  <div class="phones">
+    <div class="phone"><img src="screenshot-portrait-1.png" /></div>
+    <div class="phone"><img src="screenshot-portrait-4.png" /></div>
+  </div>
+</body>
+</html>
