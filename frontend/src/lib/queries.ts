@@ -1,8 +1,16 @@
 import { selectFrom } from '@/lib/supabase';
-import type { EtfDetail, EtfHolding, EtfListRow, EtfMeta, EtfQuote, EtfRisk } from '@/types/etf';
+import type {
+  EtfDetail,
+  EtfHolding,
+  EtfListRow,
+  Market,
+  EtfMeta,
+  EtfQuote,
+  EtfRisk,
+} from '@/types/etf';
 
 const LIST_SELECT =
-  'select=code,date,close,change_pct,premium_pct,volume,etf_meta!inner(name,category,tags)';
+  'select=code,date,close,change_pct,premium_pct,volume,etf_meta!inner(name,category,tags,market,currency)';
 
 let _latestDate: string | null = null;
 
@@ -16,7 +24,11 @@ export async function latestDate(): Promise<string | null> {
 
 export type ListMode = 'volume' | 'gainers' | 'losers';
 
-export async function fetchTopList(mode: ListMode, limit = 30): Promise<EtfListRow[]> {
+export async function fetchTopList(
+  mode: ListMode,
+  market: Market = 'KR',
+  limit = 30,
+): Promise<EtfListRow[]> {
   const date = await latestDate();
   if (!date) return [];
   const order =
@@ -25,8 +37,7 @@ export async function fetchTopList(mode: ListMode, limit = 30): Promise<EtfListR
       : mode === 'gainers'
         ? 'change_pct.desc'
         : 'change_pct.asc';
-  // 종목성 우선: 거래량 0/null 제외해 의미있는 행만
-  const q = `${LIST_SELECT}&date=eq.${date}&order=${order}&limit=${limit}`;
+  const q = `${LIST_SELECT}&date=eq.${date}&etf_meta.market=eq.${market}&order=${order}&limit=${limit}`;
   return selectFrom('etf_daily_quote', q);
 }
 

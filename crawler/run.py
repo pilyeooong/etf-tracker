@@ -17,7 +17,9 @@ from zoneinfo import ZoneInfo
 
 import naver
 import naver_detail
+import naver_us
 import supabase_io
+import us_universe
 
 KST = ZoneInfo("Asia/Seoul")
 WORKERS = 8
@@ -62,48 +64,64 @@ def main() -> int:
     print("[stage1] etf_meta:", supabase_io.upsert("etf_meta", metas, "code"))
     print("[stage1] etf_daily_quote:", supabase_io.upsert("etf_daily_quote", quotes, "code,date"))
 
-    if no_detail:
-        print("[done] (상세 생략)")
-        return 0
+    # ── Stage 2: KR 종목별 상세 ──
+    if not no_detail:
+        codes = [m["code"] for m in metas]
+        if detail_limit:
+            codes = codes[:detail_limit]
+        print(f"[stage2] 상세 수집 {len(codes)}종목 (workers={WORKERS})")
 
-    # ── Stage 2: 종목별 상세 ──
-    codes = [m["code"] for m in metas]
-    if detail_limit:
-        codes = codes[:detail_limit]
-    print(f"[stage2] 상세 수집 {len(codes)}종목 (workers={WORKERS})")
+        name_by_code = {m["code"]: m["name"] for m in metas}
+        meta_patch, risks, details, holdings = [], [], [], []
 
-    name_by_code = {m["code"]: m["name"] for m in metas}
-    meta_patch, risks, details, holdings = [], [], [], []
+        with ThreadPoolExecutor(max_workers=WORKERS) as ex:
+            for res in ex.map(lambda c: naver_detail.fetch_detail(c, trade_date), codes):
+                if not res:
+                    continue
+                m = res["meta"]
+                # 키 고정(벌크 upsert는 모든 행 키 동일 + name NOT NULL). issuer는 stage1 값 보존.
+                meta_patch.append(
+                    {
+                        "code": m["code"],
+                        "name": name_by_code.get(m["code"], m["code"]),
+                        "base_index": m["base_index"],
+                        "fee_pct": m["fee_pct"],
+                        "tax_category": m["tax_category"],
+                        "listing_date": m["listing_date"],
+                    }
+                )
+                risks.append(res["risk"])
+                details.append(res["detail"])
+                holdings.extend(res["holdings"])
 
-    def work(code: str):
-        return naver_detail.fetch_detail(code, trade_date)
+        print(f"[stage2] 성공 {len(details)}/{len(codes)}, 구성종목 {len(holdings)}행")
+        supabase_io.upsert("etf_meta", meta_patch, "code")
+        supabase_io.upsert("etf_risk", risks, "code")
+        supabase_io.upsert("etf_detail", details, "code")
+        supabase_io.delete_all("etf_holding")
+        supabase_io.upsert("etf_holding", holdings, "code,stock_code,stock_name")
+        print("[stage2] 적재 완료")
+    else:
+        print("[stage2] 생략")
 
-    with ThreadPoolExecutor(max_workers=WORKERS) as ex:
-        for res in ex.map(work, codes):
-            if not res:
-                continue
-            m = res["meta"]
-            # 키 고정(벌크 upsert는 모든 행 키 동일 + name NOT NULL 필요). issuer는 stage1 값 보존.
-            meta_patch.append(
-                {
-                    "code": m["code"],
-                    "name": name_by_code.get(m["code"], m["code"]),
-                    "base_index": m["base_index"],
-                    "fee_pct": m["fee_pct"],
-                    "tax_category": m["tax_category"],
-                    "listing_date": m["listing_date"],
-                }
-            )
-            risks.append(res["risk"])
-            details.append(res["detail"])
-            holdings.extend(res["holdings"])
+    # ── Stage 3: 미국 상장 ETF (큐레이션) ──
+    if os.environ.get("NO_US") != "1":
+        tickers = us_universe.US_ETFS
+        print(f"[stage3] 미국 ETF 수집 {len(tickers)}종목 (workers={WORKERS})")
+        us_metas, us_quotes, us_details = [], [], []
+        with ThreadPoolExecutor(max_workers=WORKERS) as ex:
+            for res in ex.map(lambda tc: naver_us.fetch_us(tc[0], tc[1], trade_date), tickers):
+                if not res:
+                    continue
+                us_metas.append(res["meta"])
+                us_quotes.append(res["quote"])
+                us_details.append(res["detail"])
+        print(f"[stage3] 성공 {len(us_quotes)}/{len(tickers)}")
+        supabase_io.upsert("etf_meta", us_metas, "code")
+        supabase_io.upsert("etf_daily_quote", us_quotes, "code,date")
+        supabase_io.upsert("etf_detail", us_details, "code")
+        print("[stage3] 적재 완료")
 
-    print(f"[stage2] 성공 {len(details)}/{len(codes)}, 구성종목 {len(holdings)}행")
-    print("[stage2] etf_meta(보강):", supabase_io.upsert("etf_meta", meta_patch, "code"))
-    print("[stage2] etf_risk:", supabase_io.upsert("etf_risk", risks, "code"))
-    print("[stage2] etf_detail:", supabase_io.upsert("etf_detail", details, "code"))
-    supabase_io.delete_all("etf_holding")
-    print("[stage2] etf_holding:", supabase_io.upsert("etf_holding", holdings, "code,stock_code,stock_name"))
     print("[done]")
     return 0
 

@@ -1,3 +1,5 @@
+export type Market = 'KR' | 'US';
+
 export interface EtfMeta {
   code: string;
   name: string;
@@ -8,6 +10,8 @@ export interface EtfMeta {
   listing_date: string | null;
   category: string | null;
   tags: string[];
+  market: Market;
+  currency: string;
 }
 
 export interface EtfQuote {
@@ -72,5 +76,11 @@ export interface EtfListRow {
   change_pct: number | null;
   premium_pct: number | null;
   volume: number | null;
-  etf_meta: { name: string; category: string | null; tags: string[] } | null;
+  etf_meta: {
+    name: string;
+    category: string | null;
+    tags: string[];
+    market: Market;
+    currency: string;
+  } | null;
 }

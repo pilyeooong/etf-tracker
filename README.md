@@ -6,8 +6,9 @@
 ```
 GitHub Actions (평일 18:30 KST, cron)
   └ crawler/  파이썬 일배치
-       ├ stage1: 네이버 etfItemList → 전 종목 시세 (1콜)
-       └ stage2: 네이버 etfAnalysis(종목별) → 메타·수익률·섹터·TOP10·분배·괴리/추적오차
+       ├ stage1: 네이버 etfItemList → 국내 전 종목 시세 (1콜)
+       ├ stage2: 네이버 etfAnalysis(종목별) → 메타·수익률·섹터·TOP10·분배·괴리/추적오차
+       └ stage3: 네이버 해외 basic(큐레이션 ~110종목) → 미국 상장 ETF 시세·배당
 Supabase (free)
   ├ Postgres   : etf_meta / etf_daily_quote / etf_detail / etf_risk / etf_holding / etf_dividend / etf_index_daily
   └ PostgREST  : 프론트가 anon 키로 읽기 (RLS: public read)
@@ -36,17 +37,21 @@ etf-tracker/
 
 ## 기능
 
-- **홈**: 최신 거래일의 거래량/상승/하락 TOP 30, 종가·등락·괴리율
-- **검색**: ETF 이름 검색 + **종목 역검색**(예: "삼성전자" → 그 종목 담은 ETF) + 테마/유형 칩(반도체·AI·배당·레버리지·인버스·커버드콜·액티브 등)
-- **상세**: 가격·괴리율·추적오차, 총보수·분배수익률·시총·상장일·과세유형, 기간 수익률(1·3·6·12M), 구성종목 TOP10 비중바, 섹터 비중, 상품 설명
+- **홈**: 🇰🇷국내 / 🇺🇸미국 토글 + 거래량/상승/하락 TOP 30 (KR=종가·등락·괴리율, US=$시세·등락)
+- **검색**: ETF 이름 검색 + **종목 역검색**(예: "삼성전자" → 그 종목 담은 ETF) + 테마/유형 칩. KR·US 이름 교차 검색.
+- **상세**:
+  - KR: 가격·괴리율·추적오차, 총보수·분배수익률·시총·상장일·과세유형, 기간 수익률(1·3·6·12M), 구성종목 TOP10 비중바, 섹터 비중, 상품 설명
+  - US: $시세·등락, 분배수익률·주당분배금·시총·거래대금·거래량 (괴리율/NAV/구성종목 미제공 — 미국 ETF는 괴리율이 무의미)
 
 ## 데이터 소스
 
 - **네이버 금융** (로그인·OTP 불필요)
-  - `etfItemList.nhn` — 전 종목(~1,140) 현재가/NAV/등락/거래량/시총/분류 (1콜)
-  - `m.stock.naver.com/api/stock/{code}/etfAnalysis` — 종목별 상세 (메타·수익률·섹터·TOP10·분배·괴리/추적오차)
+  - `etfItemList.nhn` — 국내 전 종목(~1,140) 현재가/NAV/등락/거래량/시총/분류 (1콜)
+  - `m.stock.naver.com/api/stock/{code}/etfAnalysis` — 국내 종목별 상세
+  - `api.stock.naver.com/stock/{ticker}/basic` — 미국 ETF 시세·시총·배당 (티커별; reuters 접미사 `.O`/`.K`/bare 자동 탐색)
+- 미국 큐레이션 목록: `crawler/us_universe.py` (한국인 인기 ~110종목). 미국은 전종목 일괄 엔드포인트가 없음.
 - KRX 정보데이터시스템은 ETF 전종목 시세가 **로그인 게이트**라 미사용.
-- 단위: `trading_value`=백만원, `market_cap`/`net_assets`=억원 (네이버 원단위).
+- 단위: KR `trading_value`=백만원·`market_cap`=억원 / US `trading_value`·`market_cap`=억 USD.
 
 ## 셋업
 

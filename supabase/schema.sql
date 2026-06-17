@@ -6,17 +6,20 @@
 -- 1. ETF 메타 (거의 안 변함, 주1회 갱신)
 -- ─────────────────────────────────────────────
 create table if not exists etf_meta (
-  code           text primary key,          -- 단축코드 '069500'
+  code           text primary key,          -- KR=단축코드 '069500' / US=티커 'SPY'
   name           text not null,             -- 종목명
   issuer         text,                       -- 운용사
   base_index     text,                       -- 추적지수
   fee_pct        numeric,                    -- 총보수(%)
   tax_category   text,                       -- 과세유형
   listing_date   date,                       -- 상장일
-  category       text,                       -- 테마(반도체/미국/배당...) — finder용, 수기/룰 분류
+  category       text,                       -- 분류/테마 — finder용
   tags           text[] default '{}',        -- 액티브/레버리지/인버스/배당/커버드콜
+  market         text not null default 'KR', -- 'KR'(한국 상장) | 'US'(미국 상장)
+  currency       text not null default 'KRW',-- 'KRW' | 'USD'
   updated_at     timestamptz default now()
 );
+create index if not exists idx_meta_market on etf_meta(market);
 
 -- ─────────────────────────────────────────────
 -- 2. 일별 시세 (배치 1일 1회) — 핵심

@@ -1,10 +1,12 @@
 import { useNavigate } from 'react-router-dom';
-import { fmt, pct, signColor } from '@/lib/format';
+import { pct, price, signColor } from '@/lib/format';
 import type { EtfListRow } from '@/types/etf';
 
 export function ListRow({ row }: { row: EtfListRow }) {
   const navigate = useNavigate();
   const name = row.etf_meta?.name ?? row.code;
+  const currency = row.etf_meta?.currency ?? 'KRW';
+  const isUS = row.etf_meta?.market === 'US';
   return (
     <button
       onClick={() => navigate(`/etf/${row.code}`)}
@@ -40,9 +42,12 @@ export function ListRow({ row }: { row: EtfListRow }) {
         </div>
       </div>
       <div style={{ textAlign: 'right', flexShrink: 0 }}>
-        <div style={{ fontWeight: 700, fontSize: 15, color: '#191f28' }}>{fmt(row.close)}원</div>
+        <div style={{ fontWeight: 700, fontSize: 15, color: '#191f28' }}>
+          {price(row.close, currency)}
+        </div>
         <div style={{ fontSize: 12, color: signColor(row.change_pct), marginTop: 2 }}>
-          {pct(row.change_pct)} · 괴리 {pct(row.premium_pct)}
+          {pct(row.change_pct)}
+          {!isUS && <> · 괴리 {pct(row.premium_pct)}</>}
         </div>
       </div>
     </button>

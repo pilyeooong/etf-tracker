@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAsync } from '@/hooks/useAsync';
 import { fetchDetailBundle } from '@/lib/queries';
-import { fmt, pct, signColor, won억 } from '@/lib/format';
+import { fmt, marketCap, pct, price, signColor, won억 } from '@/lib/format';
 import type { PeriodReturn, PortfolioSlice } from '@/types/etf';
 
 const PERIOD_LABEL: Record<string, string> = {
@@ -35,6 +35,8 @@ export function DetailPage() {
   if (!data?.meta) return <Centered>종목을 찾을 수 없습니다.</Centered>;
 
   const { meta, quote, detail, holdings } = data;
+  const isUS = meta.market === 'US';
+  const cur = meta.currency ?? 'KRW';
   const periods: PeriodReturn[] = (detail?.returns ?? []).filter((r) =>
     PERIOD_LABEL[r.period],
   );
@@ -52,31 +54,51 @@ export function DetailPage() {
       <div style={{ marginBottom: 6 }}>
         <h1 style={{ fontSize: 20, fontWeight: 800, margin: 0, color: '#191f28' }}>{meta.name}</h1>
         <div style={{ fontSize: 13, color: '#8b95a1', marginTop: 2 }}>
-          {meta.code} · {meta.issuer ?? '-'} · {meta.base_index ?? '-'}
+          {meta.code} · {isUS ? '🇺🇸 미국 상장' : meta.issuer ?? '-'}
+          {meta.base_index ? ` · ${meta.base_index}` : isUS && meta.category ? ` · ${meta.category}` : ''}
         </div>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, margin: '10px 0 4px' }}>
-        <span style={{ fontSize: 28, fontWeight: 800, color: '#191f28' }}>{fmt(quote?.close)}원</span>
+        <span style={{ fontSize: 28, fontWeight: 800, color: '#191f28' }}>
+          {price(quote?.close, cur)}
+        </span>
         <span style={{ fontSize: 15, fontWeight: 700, color: signColor(quote?.change_pct) }}>
           {pct(quote?.change_pct)}
         </span>
       </div>
-      <div style={{ fontSize: 13, color: '#8b95a1', marginBottom: 16 }}>
-        NAV {fmt(detail?.nav ?? quote?.nav)}원 · 괴리율{' '}
-        <b style={{ color: signColor(quote?.premium_pct) }}>{pct(quote?.premium_pct)}</b>
-        {detail?.chase_error_rate != null && <> · 추적오차 {pct(detail.chase_error_rate)}</>}
-      </div>
+      {/* KR만 NAV/괴리율/추적오차 (미국 ETF는 무의미) */}
+      {!isUS && (
+        <div style={{ fontSize: 13, color: '#8b95a1', marginBottom: 16 }}>
+          NAV {fmt(detail?.nav ?? quote?.nav)}원 · 괴리율{' '}
+          <b style={{ color: signColor(quote?.premium_pct) }}>{pct(quote?.premium_pct)}</b>
+          {detail?.chase_error_rate != null && <> · 추적오차 {pct(detail.chase_error_rate)}</>}
+        </div>
+      )}
+      {isUS && <div style={{ marginBottom: 16 }} />}
 
       {/* 요약 그리드 */}
       <Card>
         <Grid>
-          <Cell label="총보수" value={meta.fee_pct != null ? `${meta.fee_pct}%` : '-'} />
-          <Cell label="분배수익률" value={detail?.dividend_yield != null ? `${detail.dividend_yield}%` : '-'} />
-          <Cell label="시가총액" value={won억(quote?.market_cap)} />
-          <Cell label="거래대금" value={quote?.trading_value != null ? `${won억(Math.round(quote.trading_value / 100))} ` : '-'} />
-          <Cell label="상장일" value={meta.listing_date ?? '-'} />
-          <Cell label="과세유형" value={meta.tax_category ?? '-'} small />
+          {isUS ? (
+            <>
+              <Cell label="분배수익률" value={detail?.dividend_yield != null ? `${detail.dividend_yield}%` : '-'} />
+              <Cell label="주당 분배금" value={detail?.dividend_per_share != null ? `$${detail.dividend_per_share}` : '-'} />
+              <Cell label="시가총액" value={marketCap(quote?.market_cap, cur)} />
+              <Cell label="거래대금" value={marketCap(quote?.trading_value, cur)} />
+              <Cell label="거래량" value={fmt(quote?.volume)} />
+              <Cell label="구분" value={meta.category ?? '-'} small />
+            </>
+          ) : (
+            <>
+              <Cell label="총보수" value={meta.fee_pct != null ? `${meta.fee_pct}%` : '-'} />
+              <Cell label="분배수익률" value={detail?.dividend_yield != null ? `${detail.dividend_yield}%` : '-'} />
+              <Cell label="시가총액" value={marketCap(quote?.market_cap, cur)} />
+              <Cell label="거래대금" value={quote?.trading_value != null ? won억(Math.round(quote.trading_value / 100)) : '-'} />
+              <Cell label="상장일" value={meta.listing_date ?? '-'} />
+              <Cell label="과세유형" value={meta.tax_category ?? '-'} small />
+            </>
+          )}
         </Grid>
       </Card>
 
