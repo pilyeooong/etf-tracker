@@ -1,4 +1,4 @@
-# ETF나우 (etf-tracker)
+# ETF나우 (etf-insight)
 
 국내 상장 ETF의 **일별(EOD) 종가·기준가(NAV)·괴리율·구성종목·섹터/수익률**을 보여주는 앱인토스 미니앱.
 실시간은 포기하고 **크롤링 → Supabase 저장 → 서빙** 구조 (전부 무료 티어).
@@ -18,7 +18,7 @@ frontend/  Granite(Vite+React+TS) + TDS : 홈/검색/상세 3개 화면
 ## 폴더 구조
 
 ```
-etf-tracker/
+etf-insight/
 ├─ frontend/
 │  └─ src/
 │     ├─ lib/        supabase.ts(PostgREST 클라) · queries.ts(쿼리) · format.ts
