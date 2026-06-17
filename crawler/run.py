@@ -18,9 +18,9 @@ from zoneinfo import ZoneInfo
 import naver
 import naver_detail
 import naver_us
+import stockanalysis
 import supabase_io
 import us_universe
-import yahoo
 
 KST = ZoneInfo("Asia/Seoul")
 WORKERS = 8
@@ -119,16 +119,16 @@ def main() -> int:
                 us_details.append(res["detail"])
         print(f"[stage3] 네이버 시세 {len(us_quotes)}/{len(tickers)}")
 
-        # Yahoo 보강: 구성종목·섹터·보수 (비공식 API라 저동시성 + graceful skip)
+        # 구성종목·섹터 보강 (stockanalysis.com, graceful skip)
         us_holdings = []
-        if os.environ.get("NO_YAHOO") != "1" and us_metas:
+        if os.environ.get("NO_HOLDINGS") != "1" and us_metas:
             meta_by = {m["code"]: m for m in us_metas}
             detail_by = {d["code"]: d for d in us_details}
             us_codes = list(meta_by.keys())
-            print(f"[stage3] Yahoo 보강 {len(us_codes)}종목 (workers=3)")
+            print(f"[stage3] 구성종목 보강 {len(us_codes)}종목 (workers={WORKERS})")
             ok = 0
-            with ThreadPoolExecutor(max_workers=3) as ex:
-                for code, y in zip(us_codes, ex.map(lambda c: yahoo.fetch_holdings(c, trade_date), us_codes)):
+            with ThreadPoolExecutor(max_workers=WORKERS) as ex:
+                for code, y in zip(us_codes, ex.map(lambda c: stockanalysis.fetch_holdings(c, trade_date), us_codes)):
                     if not y:
                         continue
                     ok += 1
@@ -137,15 +137,23 @@ def main() -> int:
                         detail_by[code]["sector_portfolio"] = y["sectors"]
                     if y["fee_pct"] is not None:
                         meta_by[code]["fee_pct"] = y["fee_pct"]
-            print(f"[stage3] Yahoo {ok}/{len(us_codes)}, 구성종목 {len(us_holdings)}행")
+            print(f"[stage3] 구성종목 {ok}/{len(us_codes)}, {len(us_holdings)}행")
 
         supabase_io.upsert("etf_meta", us_metas, "code")
         supabase_io.upsert("etf_daily_quote", us_quotes, "code,date")
         supabase_io.upsert("etf_detail", us_details, "code")
         if us_holdings:
+            # PK(code,stock_code,stock_name) 중복 제거(동일 종목 중복 행 방지)
+            seen, deduped = set(), []
+            for h in us_holdings:
+                k = (h["code"], h["stock_code"], h["stock_name"])
+                if k in seen:
+                    continue
+                seen.add(k)
+                deduped.append(h)
             us_codes = [m["code"] for m in us_metas]
             supabase_io.delete_in("etf_holding", "code", us_codes)
-            supabase_io.upsert("etf_holding", us_holdings, "code,stock_code,stock_name")
+            supabase_io.upsert("etf_holding", deduped, "code,stock_code,stock_name")
         print("[stage3] 적재 완료")
 
     print("[done]")

@@ -41,7 +41,7 @@ etf-tracker/
 - **검색**: ETF 이름 검색 + **종목 역검색**(예: "삼성전자" → 그 종목 담은 ETF) + 테마/유형 칩. KR·US 이름 교차 검색.
 - **상세**:
   - KR: 가격·괴리율·추적오차, 총보수·분배수익률·시총·상장일·과세유형, 기간 수익률(1·3·6·12M), 구성종목 TOP10 비중바, 섹터 비중, 상품 설명
-  - US: $시세·등락, 총보수·분배수익률·주당분배금·시총·거래량, 구성종목 TOP10·섹터 비중(Yahoo) (괴리율/NAV는 미제공 — 미국 ETF는 괴리율이 무의미)
+  - US: $시세·등락, 분배수익률·주당분배금·시총·거래량, 구성종목 TOP10·섹터 비중(stockanalysis) (괴리율/NAV는 미제공 — 미국 ETF는 괴리율이 무의미)
 
 ## 데이터 소스
 
@@ -49,7 +49,7 @@ etf-tracker/
   - `etfItemList.nhn` — 국내 전 종목(~1,140) 현재가/NAV/등락/거래량/시총/분류 (1콜)
   - `m.stock.naver.com/api/stock/{code}/etfAnalysis` — 국내 종목별 상세
   - `api.stock.naver.com/stock/{ticker}/basic` — 미국 ETF 시세·시총·배당 (티커별; reuters 접미사 `.O`/`.K`/bare 자동 탐색)
-- **Yahoo Finance** `quoteSummary?modules=topHoldings,fundProfile` — 미국 ETF 구성종목 TOP10·섹터 비중·총보수 보강 (`crawler/yahoo.py`). 비공식 API라 cookie+crumb 핸드셰이크 필요·레이트리밋 취약 → 실패 시 graceful skip(가격·배당은 네이버가 이미 채움). `NO_YAHOO=1`로 생략 가능.
+- **stockanalysis.com** `/api/symbol/e/{ticker}/holdings` — 미국 ETF 구성종목 TOP10·섹터 비중 보강 (`crawler/stockanalysis.py`). 키 불필요·데이터센터 IP 친화적(Yahoo는 클라우드 IP를 차단해 GH Actions에서 0건이라 교체). 실패 시 graceful skip. `NO_HOLDINGS=1`로 생략 가능.
 - 미국 큐레이션 목록: `crawler/us_universe.py` (한국인 인기 ~110종목). 미국은 전종목 일괄 엔드포인트가 없음.
 - KRX 정보데이터시스템은 ETF 전종목 시세가 **로그인 게이트**라 미사용.
 - 단위: KR `trading_value`=백만원·`market_cap`=억원 / US `trading_value`·`market_cap`=억 USD.
