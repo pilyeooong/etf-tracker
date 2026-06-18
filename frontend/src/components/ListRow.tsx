@@ -1,59 +1,60 @@
 import { useNavigate } from 'react-router-dom';
+import { ListRow as TdsListRow, Text } from '@toss/tds-mobile';
+import { colors } from '@toss/tds-colors';
 import { pct, price, signColor } from '@/lib/format';
 import { maybeShowInterstitial } from '@/lib/interstitial';
 import type { EtfListRow } from '@/types/etf';
+
+const ellipsis = {
+  display: 'block',
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+} as const;
 
 export function ListRow({ row }: { row: EtfListRow }) {
   const navigate = useNavigate();
   const name = row.etf_meta?.name ?? row.code;
   const currency = row.etf_meta?.currency ?? 'KRW';
   const isUS = row.etf_meta?.market === 'US';
+
   return (
-    <button
+    <TdsListRow
+      withTouchEffect
+      horizontalPadding="small"
       onClick={() => {
         navigate(`/etf/${row.code}`);
         maybeShowInterstitial(); // 빈도 조건 충족 시에만 전면 광고
       }}
-      style={{
-        display: 'flex',
-        width: '100%',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '14px 4px',
-        borderBottom: '1px solid #f2f4f6',
-        background: 'none',
-        border: 'none',
-        borderBottomStyle: 'solid',
-        cursor: 'pointer',
-        textAlign: 'left',
-      }}
-    >
-      <div style={{ minWidth: 0, paddingRight: 12 }}>
+      contents={
         <div
           style={{
-            fontWeight: 600,
-            fontSize: 15,
-            color: '#191f28',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            width: '100%',
+            gap: 12,
           }}
         >
-          {name}
+          <div style={{ minWidth: 0 }}>
+            <Text typography="t6" fontWeight="bold" color={colors.grey900} style={ellipsis}>
+              {name}
+            </Text>
+            <Text typography="st12" color={colors.grey500} style={{ display: 'block', marginTop: 2 }}>
+              {row.code} · {row.etf_meta?.category ?? '-'}
+            </Text>
+          </div>
+          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+            <Text typography="t6" fontWeight="bold" color={colors.grey900} style={{ display: 'block' }}>
+              {price(row.close, currency)}
+            </Text>
+            <Text typography="st12" color={signColor(row.change_pct)} style={{ display: 'block', marginTop: 2 }}>
+              {pct(row.change_pct)}
+              {!isUS && ` · 괴리 ${pct(row.premium_pct)}`}
+            </Text>
+          </div>
         </div>
-        <div style={{ fontSize: 12, color: '#8b95a1', marginTop: 2 }}>
-          {row.code} · {row.etf_meta?.category ?? '-'}
-        </div>
-      </div>
-      <div style={{ textAlign: 'right', flexShrink: 0 }}>
-        <div style={{ fontWeight: 700, fontSize: 15, color: '#191f28' }}>
-          {price(row.close, currency)}
-        </div>
-        <div style={{ fontSize: 12, color: signColor(row.change_pct), marginTop: 2 }}>
-          {pct(row.change_pct)}
-          {!isUS && <> · 괴리 {pct(row.premium_pct)}</>}
-        </div>
-      </div>
-    </button>
+      }
+    />
   );
 }

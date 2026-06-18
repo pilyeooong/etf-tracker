@@ -1,3 +1,5 @@
+import { colors } from '@toss/tds-colors';
+
 export function fmt(n: number | null | undefined, digits = 0): string {
   if (n === null || n === undefined) return '-';
   return n.toLocaleString('ko-KR', { maximumFractionDigits: digits });
@@ -8,12 +10,12 @@ export function pct(n: number | null | undefined, digits = 2): string {
   return `${n > 0 ? '+' : ''}${n.toLocaleString('ko-KR', { maximumFractionDigits: digits })}%`;
 }
 
-// 한국식 등락 색상: 상승=빨강, 하락=파랑
+// 한국식 등락 색상: 상승=빨강, 하락=파랑 (TDS 컬러 토큰)
 export function signColor(n: number | null | undefined): string {
-  if (n === null || n === undefined) return '#8b95a1';
-  if (n > 0) return '#e5443a';
-  if (n < 0) return '#1a73e8';
-  return '#8b95a1';
+  if (n === null || n === undefined) return colors.grey500;
+  if (n > 0) return colors.red500;
+  if (n < 0) return colors.blue500;
+  return colors.grey500;
 }
 
 // 억원 → 사람이 읽는 단위(조/억)

@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { List, Text, TextField } from '@toss/tds-mobile';
+import { colors } from '@toss/tds-colors';
 import { ListRow } from '@/components/ListRow';
 import { useAsync } from '@/hooks/useAsync';
 import { searchByHolding, searchByName, searchByTag } from '@/lib/queries';
@@ -22,6 +24,16 @@ async function runSearch(query: string, tag: string | null): Promise<EtfListRow[
   return merged;
 }
 
+function Hint({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ padding: '16px 0', lineHeight: 1.7 }}>
+      <Text typography="t7" color={colors.grey500}>
+        {children}
+      </Text>
+    </div>
+  );
+}
+
 export function SearchPage() {
   const [input, setInput] = useState('');
   const [query, setQuery] = useState('');
@@ -32,9 +44,11 @@ export function SearchPage() {
 
   return (
     <div style={{ padding: '20px 16px 88px', maxWidth: 560, margin: '0 auto' }}>
-      <h1 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 12px', color: '#191f28' }}>
-        ETF 찾기
-      </h1>
+      <div style={{ marginBottom: 12 }}>
+        <Text typography="t4" fontWeight="bold" color={colors.grey900}>
+          ETF 찾기
+        </Text>
+      </div>
 
       <form
         onSubmit={(e) => {
@@ -43,19 +57,11 @@ export function SearchPage() {
           setQuery(input);
         }}
       >
-        <input
+        <TextField
+          variant="box"
+          placeholder="ETF 이름 또는 종목명 (예: 삼성전자, 반도체)"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="ETF 이름 또는 종목명 (예: 삼성전자, 반도체)"
-          style={{
-            width: '100%',
-            boxSizing: 'border-box',
-            padding: '13px 16px',
-            borderRadius: 12,
-            border: '1px solid #e5e8eb',
-            fontSize: 15,
-            outline: 'none',
-          }}
         />
       </form>
 
@@ -81,19 +87,22 @@ export function SearchPage() {
       />
 
       <div style={{ marginTop: 8 }}>
-        {loading && <p style={{ color: '#8b95a1', padding: '16px 0' }}>검색 중…</p>}
-        {error && <p style={{ color: '#e5443a', padding: '16px 0' }}>오류: {error}</p>}
-        {!loading && !error && !hasResult && (query || tag) && (
-          <p style={{ color: '#8b95a1', padding: '16px 0' }}>결과가 없습니다.</p>
+        {loading && <Hint>검색 중…</Hint>}
+        {error && (
+          <div style={{ padding: '16px 0' }}>
+            <Text typography="t7" color={colors.red500}>
+              오류: {error}
+            </Text>
+          </div>
         )}
+        {!loading && !error && !hasResult && (query || tag) && <Hint>결과가 없습니다.</Hint>}
         {!loading && !error && !query && !tag && (
-          <p style={{ color: '#8b95a1', padding: '16px 0', fontSize: 14, lineHeight: 1.7 }}>
-            키워드·종목명으로 검색하거나, 위 칩으로 빠르게 찾아보세요.
-            <br />
-            종목명(예: 삼성전자)으로 검색하면 그 종목을 담은 ETF를 찾아줍니다.
-          </p>
+          <Hint>
+            키워드·종목명으로 검색하거나, 위 칩으로 빠르게 찾아보세요. 종목명(예: 삼성전자)으로 검색하면
+            그 종목을 담은 ETF를 찾아줍니다.
+          </Hint>
         )}
-        {data?.map((row) => <ListRow key={row.code} row={row} />)}
+        <List>{data?.map((row) => <ListRow key={row.code} row={row} />)}</List>
       </div>
     </div>
   );
@@ -112,26 +121,32 @@ function Chips({
 }) {
   return (
     <div style={{ marginTop: 14 }}>
-      <div style={{ fontSize: 12, color: '#8b95a1', marginBottom: 6 }}>{label}</div>
+      <div style={{ marginBottom: 6 }}>
+        <Text typography="st12" color={colors.grey500}>
+          {label}
+        </Text>
+      </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-        {items.map((t) => (
-          <button
-            key={t}
-            onClick={() => onPick(t)}
-            style={{
-              padding: '7px 14px',
-              borderRadius: 999,
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: 13,
-              fontWeight: 600,
-              background: active === t ? '#3182f6' : '#f2f4f6',
-              color: active === t ? '#fff' : '#4e5968',
-            }}
-          >
-            {t}
-          </button>
-        ))}
+        {items.map((t) => {
+          const on = active === t;
+          return (
+            <button
+              key={t}
+              onClick={() => onPick(t)}
+              style={{
+                padding: '7px 14px',
+                borderRadius: 999,
+                border: 'none',
+                cursor: 'pointer',
+                background: on ? colors.blue500 : colors.grey100,
+              }}
+            >
+              <Text typography="st12" fontWeight="bold" color={on ? colors.white : colors.grey700}>
+                {t}
+              </Text>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

@@ -1,4 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
+import { Text } from '@toss/tds-mobile';
+import { colors } from '@toss/tds-colors';
 import { BannerSlot } from '@/components/BannerSlot';
 import { useAsync } from '@/hooks/useAsync';
 import { fetchDetailBundle } from '@/lib/queries';
@@ -61,27 +63,39 @@ export function DetailPage() {
 
       {/* 헤더 */}
       <div style={{ marginBottom: 6 }}>
-        <h1 style={{ fontSize: 20, fontWeight: 800, margin: 0, color: '#191f28' }}>{meta.name}</h1>
-        <div style={{ fontSize: 13, color: '#8b95a1', marginTop: 2 }}>
-          {meta.code} · {isUS ? '미국 상장' : meta.issuer ?? '-'}
-          {meta.base_index ? ` · ${meta.base_index}` : isUS && meta.category ? ` · ${meta.category}` : ''}
+        <Text typography="t4" fontWeight="bold" color={colors.grey900}>
+          {meta.name}
+        </Text>
+        <div style={{ marginTop: 2 }}>
+          <Text typography="st12" color={colors.grey500}>
+            {meta.code} · {isUS ? '미국 상장' : meta.issuer ?? '-'}
+            {meta.base_index ? ` · ${meta.base_index}` : isUS && meta.category ? ` · ${meta.category}` : ''}
+          </Text>
         </div>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, margin: '10px 0 4px' }}>
-        <span style={{ fontSize: 28, fontWeight: 800, color: '#191f28' }}>
+        <Text typography="t2" fontWeight="bold" color={colors.grey900}>
           {price(quote?.close, cur)}
-        </span>
-        <span style={{ fontSize: 15, fontWeight: 700, color: signColor(quote?.change_pct) }}>
+        </Text>
+        <Text typography="t6" fontWeight="bold" color={signColor(quote?.change_pct)}>
           {pct(quote?.change_pct)}
-        </span>
+        </Text>
       </div>
       {/* KR만 NAV/괴리율/추적오차 (미국 ETF는 무의미) */}
       {!isUS && (
-        <div style={{ fontSize: 13, color: '#8b95a1', marginBottom: 16 }}>
-          NAV {fmt(quote?.nav ?? detail?.nav)}원 · 괴리율{' '}
-          <b style={{ color: signColor(quote?.premium_pct) }}>{pct(quote?.premium_pct)}</b>
-          {detail?.chase_error_rate != null && <> · 추적오차 {pct(detail.chase_error_rate)}</>}
+        <div style={{ marginBottom: 16 }}>
+          <Text typography="st12" color={colors.grey500}>
+            NAV {fmt(quote?.nav ?? detail?.nav)}원 · 괴리율{' '}
+          </Text>
+          <Text typography="st12" fontWeight="bold" color={signColor(quote?.premium_pct)}>
+            {pct(quote?.premium_pct)}
+          </Text>
+          {detail?.chase_error_rate != null && (
+            <Text typography="st12" color={colors.grey500}>
+              {' '}· 추적오차 {pct(detail.chase_error_rate)}
+            </Text>
+          )}
         </div>
       )}
       {isUS && <div style={{ marginBottom: 16 }} />}
@@ -117,9 +131,13 @@ export function DetailPage() {
           <div style={{ display: 'flex', gap: 8 }}>
             {periods.map((p) => (
               <div key={p.period} style={{ flex: 1, textAlign: 'center' }}>
-                <div style={{ fontSize: 12, color: '#8b95a1' }}>{PERIOD_LABEL[p.period]}</div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: signColor(p.value), marginTop: 3 }}>
-                  {pct(p.value)}
+                <Text typography="st12" color={colors.grey500}>
+                  {PERIOD_LABEL[p.period]}
+                </Text>
+                <div style={{ marginTop: 3 }}>
+                  <Text typography="t6" fontWeight="bold" color={signColor(p.value)}>
+                    {pct(p.value)}
+                  </Text>
                 </div>
               </div>
             ))}
@@ -149,7 +167,7 @@ export function DetailPage() {
       {detail?.summary && (
         <Section title="상품 설명">
           <p
-            style={{ fontSize: 13, color: '#4e5968', lineHeight: 1.7, margin: 0 }}
+            style={{ fontSize: 13, color: colors.grey700, lineHeight: 1.7, margin: 0 }}
             dangerouslySetInnerHTML={{ __html: detail.summary }}
           />
         </Section>
@@ -157,10 +175,12 @@ export function DetailPage() {
 
       <BannerSlot />
 
-      <p style={{ fontSize: 11, color: '#b0b8c1', lineHeight: 1.6, marginTop: 20 }}>
-        모든 수치는 참고용 추정치이며 실제와 다를 수 있습니다. 본 정보는 투자 권유가 아니며, 투자 판단의
-        책임은 이용자 본인에게 있습니다. 데이터 출처: {sourceNote}.
-      </p>
+      <div style={{ marginTop: 20, lineHeight: 1.6 }}>
+        <Text typography="st13" color={colors.grey400}>
+          모든 수치는 참고용 추정치이며 실제와 다를 수 있습니다. 본 정보는 투자 권유가 아니며, 투자 판단의
+          책임은 이용자 본인에게 있습니다. 데이터 출처: {sourceNote}.
+        </Text>
+      </div>
     </div>
   );
 }
@@ -169,14 +189,20 @@ function WeightBar({ name, weight }: { name: string; weight: number | null }) {
   const hasWeight = weight != null;
   return (
     <div style={{ margin: '9px 0' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: hasWeight ? 4 : 0 }}>
-        <span style={{ color: '#191f28', fontWeight: 500 }}>{name}</span>
-        {hasWeight && <span style={{ color: '#4e5968', fontWeight: 600 }}>{weight}%</span>}
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: hasWeight ? 4 : 0 }}>
+        <Text typography="st12" color={colors.grey900}>
+          {name}
+        </Text>
+        {hasWeight && (
+          <Text typography="st12" fontWeight="bold" color={colors.grey700}>
+            {weight}%
+          </Text>
+        )}
       </div>
       {/* 비중 값이 없으면(현금·선물 등) 빈 막대 대신 이름만 표시 */}
       {hasWeight && (
-        <div style={{ height: 6, background: '#f2f4f6', borderRadius: 3, overflow: 'hidden' }}>
-          <div style={{ width: `${Math.min(weight, 100)}%`, height: '100%', background: '#3182f6', borderRadius: 3 }} />
+        <div style={{ height: 6, background: colors.grey100, borderRadius: 3, overflow: 'hidden' }}>
+          <div style={{ width: `${Math.min(weight, 100)}%`, height: '100%', background: colors.blue500, borderRadius: 3 }} />
         </div>
       )}
     </div>
@@ -186,14 +212,18 @@ function WeightBar({ name, weight }: { name: string; weight: number | null }) {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div style={{ marginTop: 24 }}>
-      <h2 style={{ fontSize: 15, fontWeight: 700, margin: '0 0 12px', color: '#191f28' }}>{title}</h2>
+      <div style={{ marginBottom: 12 }}>
+        <Text typography="t6" fontWeight="bold" color={colors.grey900}>
+          {title}
+        </Text>
+      </div>
       {children}
     </div>
   );
 }
 
 function Card({ children }: { children: React.ReactNode }) {
-  return <div style={{ background: '#f9fafb', borderRadius: 14, padding: 16 }}>{children}</div>;
+  return <div style={{ background: colors.grey50, borderRadius: 14, padding: 16 }}>{children}</div>;
 }
 
 function Grid({ children }: { children: React.ReactNode }) {
@@ -205,18 +235,24 @@ function Grid({ children }: { children: React.ReactNode }) {
 function Cell({ label, value, small }: { label: string; value: string; small?: boolean }) {
   return (
     <div>
-      <div style={{ fontSize: 11, color: '#8b95a1', marginBottom: 3 }}>{label}</div>
-      <div style={{ fontSize: small ? 12 : 14, fontWeight: 600, color: '#191f28', lineHeight: 1.3 }}>
-        {value}
+      <div style={{ marginBottom: 3 }}>
+        <Text typography="st13" color={colors.grey500}>
+          {label}
+        </Text>
       </div>
+      <Text typography={small ? 'st12' : 't7'} fontWeight="bold" color={colors.grey900}>
+        {value}
+      </Text>
     </div>
   );
 }
 
 function Centered({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ padding: '80px 16px', textAlign: 'center', color: '#8b95a1', fontSize: 14 }}>
-      {children}
+    <div style={{ padding: '80px 16px', textAlign: 'center' }}>
+      <Text typography="t7" color={colors.grey500}>
+        {children}
+      </Text>
     </div>
   );
 }

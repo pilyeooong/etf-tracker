@@ -1,4 +1,6 @@
 import { Fragment, useState } from 'react';
+import { List, Text } from '@toss/tds-mobile';
+import { colors } from '@toss/tds-colors';
 import { ListRow } from '@/components/ListRow';
 import { BannerSlot } from '@/components/BannerSlot';
 import { useAsync } from '@/hooks/useAsync';
@@ -19,16 +21,22 @@ export function HomePage() {
 
   return (
     <div style={{ padding: '20px 16px 88px', maxWidth: 560, margin: '0 auto' }}>
-      <h1 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 2px', color: '#191f28' }}>ETF 인사이트</h1>
-      <p style={{ fontSize: 13, color: '#8b95a1', margin: '0 0 16px' }}>
-        {market === 'KR' ? '국내 ETF · 종가 기준 괴리율' : '미국 상장 ETF · 시세·배당'}
-      </p>
+      <div>
+        <Text typography="t3" fontWeight="bold" color={colors.grey900}>
+          ETF 인사이트
+        </Text>
+      </div>
+      <div style={{ margin: '2px 0 16px' }}>
+        <Text typography="t7" color={colors.grey500}>
+          {market === 'KR' ? '국내 ETF · 종가 기준 괴리율' : '미국 상장 ETF · 시세·배당'}
+        </Text>
+      </div>
 
       {/* KR / US 세그먼트 */}
       <div
         style={{
           display: 'flex',
-          background: '#f2f4f6',
+          background: colors.grey100,
           borderRadius: 10,
           padding: 3,
           marginBottom: 12,
@@ -44,50 +52,59 @@ export function HomePage() {
               borderRadius: 8,
               border: 'none',
               cursor: 'pointer',
-              fontSize: 14,
-              fontWeight: 700,
-              background: market === m ? '#fff' : 'transparent',
-              color: market === m ? '#191f28' : '#8b95a1',
+              background: market === m ? colors.white : 'transparent',
               boxShadow: market === m ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
             }}
           >
-            {m === 'KR' ? '국내' : '미국'}
+            <Text typography="t7" fontWeight="bold" color={market === m ? colors.grey900 : colors.grey500}>
+              {m === 'KR' ? '국내' : '미국'}
+            </Text>
           </button>
         ))}
       </div>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-        {TABS.map((t) => (
-          <button
-            key={t.mode}
-            onClick={() => setMode(t.mode)}
-            style={{
-              padding: '8px 16px',
-              borderRadius: 999,
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: 14,
-              fontWeight: 600,
-              background: mode === t.mode ? '#191f28' : '#f2f4f6',
-              color: mode === t.mode ? '#fff' : '#4e5968',
-            }}
-          >
-            {t.label}
-          </button>
-        ))}
+      {/* 거래량/상승/하락 탭 */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
+        {TABS.map((t) => {
+          const on = mode === t.mode;
+          return (
+            <button
+              key={t.mode}
+              onClick={() => setMode(t.mode)}
+              style={{
+                padding: '8px 16px',
+                borderRadius: 999,
+                border: 'none',
+                cursor: 'pointer',
+                background: on ? colors.grey900 : colors.grey100,
+              }}
+            >
+              <Text typography="t7" fontWeight="bold" color={on ? colors.white : colors.grey700}>
+                {t.label}
+              </Text>
+            </button>
+          );
+        })}
       </div>
 
       {!isSupabaseConfigured() && (
         <Notice>Supabase 환경변수(VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY)를 설정하세요.</Notice>
       )}
-      {loading && <p style={{ color: '#8b95a1', padding: '20px 0' }}>불러오는 중…</p>}
+      {loading && (
+        <Text typography="t7" color={colors.grey500} style={{ display: 'block', padding: '20px 0' }}>
+          불러오는 중…
+        </Text>
+      )}
       {error && <Notice>오류: {error}</Notice>}
-      {data?.map((row, i) => (
-        <Fragment key={row.code}>
-          <ListRow row={row} />
-          {i === 6 && <BannerSlot />}
-        </Fragment>
-      ))}
+
+      <List>
+        {data?.map((row, i) => (
+          <Fragment key={row.code}>
+            <ListRow row={row} />
+            {i === 6 && <BannerSlot />}
+          </Fragment>
+        ))}
+      </List>
     </div>
   );
 }
@@ -96,16 +113,16 @@ function Notice({ children }: { children: React.ReactNode }) {
   return (
     <div
       style={{
-        background: '#f6f8fa',
+        background: colors.grey50,
         borderRadius: 10,
         padding: '12px 14px',
-        fontSize: 13,
-        color: '#4e5968',
         lineHeight: 1.6,
         margin: '12px 0',
       }}
     >
-      {children}
+      <Text typography="t7" color={colors.grey700}>
+        {children}
+      </Text>
     </div>
   );
 }

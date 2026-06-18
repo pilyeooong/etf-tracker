@@ -1,5 +1,7 @@
 import type { ComponentType } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { Text } from '@toss/tds-mobile';
+import { colors } from '@toss/tds-colors';
 import { HomeIcon, SearchIcon } from '@/components/icons';
 
 interface NavItem {
@@ -26,15 +28,15 @@ export function BottomNav() {
         bottom: 0,
         display: 'flex',
         justifyContent: 'space-around',
-        borderTop: '1px solid #f2f4f6',
-        background: '#fff',
+        borderTop: `1px solid ${colors.grey100}`,
+        background: colors.white,
         paddingBottom: 'env(safe-area-inset-bottom)',
         zIndex: 10,
       }}
     >
       {ITEMS.map(({ path, label, Icon }) => {
         const active = path === '/' ? pathname === '/' : pathname.startsWith(path);
-        const color = active ? '#3182f6' : '#8b95a1';
+        const color = active ? colors.blue500 : colors.grey500;
         return (
           <button
             key={path}
@@ -45,8 +47,6 @@ export function BottomNav() {
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color,
-              fontWeight: active ? 700 : 500,
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -54,7 +54,9 @@ export function BottomNav() {
             }}
           >
             <Icon size={22} color={color} />
-            <span style={{ fontSize: 11 }}>{label}</span>
+            <Text typography="st13" fontWeight={active ? 'bold' : 'medium'} color={color}>
+              {label}
+            </Text>
           </button>
         );
       })}
