@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { HashRouter, Route, Routes } from 'react-router-dom';
+// BrowserRouter(경로 기반): 딥링크 intoss://etf-insight/search → /search 매핑 (앱인토스 앱 내 기능)
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { BottomNav } from '@/components/BottomNav';
 import { HomePage } from '@/pages/HomePage';
 import { SearchPage } from '@/pages/SearchPage';
@@ -12,7 +13,7 @@ function App() {
   }, []);
 
   return (
-    <HashRouter>
+    <BrowserRouter>
       <div style={{ fontFamily: 'system-ui, -apple-system, sans-serif', minHeight: '100vh', background: '#fff' }}>
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -21,7 +22,7 @@ function App() {
         </Routes>
         <BottomNav />
       </div>
-    </HashRouter>
+    </BrowserRouter>
   );
 }
 

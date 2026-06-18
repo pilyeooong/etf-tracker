@@ -57,17 +57,23 @@
 
 ## 앱 내 기능 (비게임 ≥1개 필수)
 
+**BrowserRouter(경로 기반)로 딥링크 활성화 완료** — 하위 경로 딥링크가 실제 동작(검증됨).
+
+기능 ① — 홈
 | 항목 | 입력값 | 메모 |
 |---|---|---|
-| 한국어 기능 이름 | `오늘의 ETF` | 7자, 명사형 |
-| 영어 기능 이름 | `Etf today` | 9자, 첫 글자만 대문자 |
-| 이동 URL | `intoss://etf-insight/` | 홈(인덱스) 진입 |
+| 한국어 | `오늘의 ETF` | 7자, 명사형 |
+| 영어 | `Etf today` | 9자, 첫 글자만 대문자 |
+| URL | `intoss://etf-insight/` | 홈 진입 |
 
-> ⚠️ **현재 앱은 HashRouter**라 `intoss://etf-insight/search` 같은 **하위 경로 딥링크는 홈으로 떨어짐**. 하위 기능 딥링크(예: 검색 바로가기)를 등록하려면 BrowserRouter로 전환 필요. 우선 홈 진입 1개로 출시하고, 딥링크 기능은 후속으로.
+기능 ② — 검색 (딥링크)
+| 항목 | 입력값 | 메모 |
+|---|---|---|
+| 한국어 | `ETF 검색` | 6자 |
+| 영어 | `Etf search` | 10자, 첫 글자만 대문자 |
+| URL | `intoss://etf-insight/search` | 검색 화면 직접 진입 (`/search` 매핑) |
 
-### 대안 후보
-- 한 `ETF 둘러보기` / 영 `Browse etf`
-- 한 `ETF 검색` / 영 `Etf search` (BrowserRouter 전환 후 `intoss://etf-insight/search`)
+> 라우팅: App은 **BrowserRouter** + `<Route path="/search">` / `<Route path="/etf/:code">`. 토스 웹뷰가 `intoss://etf-insight/<path>`로 진입하면 해당 경로로 바로 렌더됨(SPA, index.html 폴백). `intoss://etf-insight/etf/SPY` 같은 종목 딥링크도 동작.
 
 ## 검색 키워드
 
