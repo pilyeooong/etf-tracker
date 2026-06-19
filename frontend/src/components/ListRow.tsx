@@ -5,12 +5,13 @@ import { pct, price, signColor } from '@/lib/format';
 import { maybeShowInterstitial } from '@/lib/interstitial';
 import type { EtfListRow } from '@/types/etf';
 
+// TDS Text는 인라인이라 style의 display:block을 무시함 → 줄바꿈은 block <div> 래퍼로 강제.
 const ellipsis = {
-  display: 'block',
   whiteSpace: 'nowrap',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
 } as const;
+const nowrap = { whiteSpace: 'nowrap' } as const;
 
 export function ListRow({ row }: { row: EtfListRow }) {
   const navigate = useNavigate();
@@ -36,22 +37,32 @@ export function ListRow({ row }: { row: EtfListRow }) {
             gap: 12,
           }}
         >
-          <div style={{ minWidth: 0 }}>
-            <Text typography="t6" fontWeight="bold" color={colors.grey900} style={ellipsis}>
-              {name}
-            </Text>
-            <Text typography="st12" color={colors.grey500} style={{ display: 'block', marginTop: 2 }}>
-              {row.code} · {row.etf_meta?.category ?? '-'}
-            </Text>
+          {/* 왼쪽: 이름 / 코드·분류 (각각 한 줄, 길면 말줄임) */}
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={ellipsis}>
+              <Text typography="t6" fontWeight="bold" color={colors.grey900} style={nowrap}>
+                {name}
+              </Text>
+            </div>
+            <div style={{ marginTop: 2, ...ellipsis }}>
+              <Text typography="st12" color={colors.grey500} style={nowrap}>
+                {row.code} · {row.etf_meta?.category ?? '-'}
+              </Text>
+            </div>
           </div>
-          <div style={{ textAlign: 'right', flexShrink: 0 }}>
-            <Text typography="t6" fontWeight="bold" color={colors.grey900} style={{ display: 'block' }}>
-              {price(row.close, currency)}
-            </Text>
-            <Text typography="st12" color={signColor(row.change_pct)} style={{ display: 'block', marginTop: 2 }}>
-              {pct(row.change_pct)}
-              {!isUS && ` · 괴리 ${pct(row.premium_pct)}`}
-            </Text>
+          {/* 오른쪽: 가격 / 변동율·괴리율 (각각 한 줄, 우측정렬) */}
+          <div style={{ textAlign: 'right', flexShrink: 0, whiteSpace: 'nowrap' }}>
+            <div>
+              <Text typography="t6" fontWeight="bold" color={colors.grey900}>
+                {price(row.close, currency)}
+              </Text>
+            </div>
+            <div style={{ marginTop: 2 }}>
+              <Text typography="st12" color={signColor(row.change_pct)}>
+                {pct(row.change_pct)}
+                {!isUS && ` · 괴리 ${pct(row.premium_pct)}`}
+              </Text>
+            </div>
           </div>
         </div>
       }
