@@ -1,13 +1,40 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { List, ListRow as TdsListRow, Text, TextField } from '@toss/tds-mobile';
 import { colors } from '@toss/tds-colors';
 import { AdGate } from '@/components/AdGate';
+import { LoadMore } from '@/components/LoadMore';
 import { useAsync } from '@/hooks/useAsync';
-import { fetchCompareData, searchByName } from '@/lib/queries';
+import { useInfiniteList } from '@/hooks/useInfiniteList';
+import { fetchCompareData, fetchTopList, searchByName } from '@/lib/queries';
 import { marketCap, pct, price, signColor } from '@/lib/format';
 import type { DetailBundle } from '@/lib/queries';
+import type { EtfListRow, Market } from '@/types/etf';
 
 const MAX = 3;
+const PAGE = 30;
+
+// 추가 가능한 ETF 한 줄 (검색·둘러보기 공용)
+function PickRow({ row, onAdd }: { row: EtfListRow; onAdd: () => void }) {
+  return (
+    <TdsListRow
+      withTouchEffect
+      horizontalPadding="small"
+      onClick={onAdd}
+      contents={
+        <div>
+          <Text typography="t6" fontWeight="bold" color={colors.grey900}>
+            {row.etf_meta?.name ?? row.code}
+          </Text>
+          <div style={{ marginTop: 2 }}>
+            <Text typography="st12" color={colors.grey500}>
+              {row.code} · {row.etf_meta?.category ?? '-'}
+            </Text>
+          </div>
+        </div>
+      }
+    />
+  );
+}
 
 interface Picked {
   code: string;
@@ -66,6 +93,13 @@ export function ComparePage() {
 
   const codes = picked.map((p) => p.code);
   const codesKey = codes.join(',');
+
+  const [browseMarket, setBrowseMarket] = useState<Market>('KR');
+  const browseFetch = useCallback(
+    (offset: number) => fetchTopList('volume', browseMarket, PAGE, offset),
+    [browseMarket],
+  );
+  const browse = useInfiniteList(browseFetch, [browseMarket], PAGE);
 
   const search = useAsync(() => (query.trim() ? searchByName(query, 20) : Promise.resolve([])), [query]);
   const compare = useAsync(
@@ -128,8 +162,8 @@ export function ComparePage() {
         </div>
       )}
 
-      {/* 검색해서 추가 */}
-      {picked.length < MAX && (
+      {/* 검색 + 둘러보기로 추가 (결과 노출 전, 3개 미만일 때) */}
+      {!revealed && picked.length < MAX && (
         <>
           <form
             onSubmit={(e) => {
@@ -144,34 +178,59 @@ export function ComparePage() {
               onChange={(e) => setInput(e.target.value)}
             />
           </form>
-          {search.data && search.data.length > 0 && (
+
+          {query.trim() ? (
+            // 검색 결과
             <div style={{ marginTop: 6 }}>
               <List>
-                {search.data
+                {(search.data ?? [])
                   .filter((r) => !codes.includes(r.code))
-                  .slice(0, 8)
                   .map((r) => (
-                    <TdsListRow
-                      key={r.code}
-                      withTouchEffect
-                      horizontalPadding="small"
-                      onClick={() => add(r.code, r.etf_meta?.name ?? r.code)}
-                      contents={
-                        <div>
-                          <Text typography="t6" fontWeight="bold" color={colors.grey900}>
-                            {r.etf_meta?.name ?? r.code}
-                          </Text>
-                          <div style={{ marginTop: 2 }}>
-                            <Text typography="st12" color={colors.grey500}>
-                              {r.code} · {r.etf_meta?.category ?? '-'}
-                            </Text>
-                          </div>
-                        </div>
-                      }
-                    />
+                    <PickRow key={r.code} row={r} onAdd={() => add(r.code, r.etf_meta?.name ?? r.code)} />
                   ))}
               </List>
+              {!search.loading && (search.data?.length ?? 0) === 0 && (
+                <div style={{ padding: '16px 0' }}>
+                  <Text typography="st12" color={colors.grey400}>
+                    결과가 없어요.
+                  </Text>
+                </div>
+              )}
             </div>
+          ) : (
+            // 둘러보기 (거래량순, 페이지네이션)
+            <>
+              <div style={{ display: 'flex', gap: 8, margin: '14px 0 4px' }}>
+                {(['KR', 'US'] as Market[]).map((m) => {
+                  const on = browseMarket === m;
+                  return (
+                    <button
+                      key={m}
+                      onClick={() => setBrowseMarket(m)}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: 999,
+                        border: 'none',
+                        cursor: 'pointer',
+                        background: on ? colors.grey900 : colors.grey100,
+                      }}
+                    >
+                      <Text typography="st12" fontWeight="bold" color={on ? colors.white : colors.grey600}>
+                        {m === 'KR' ? '국내' : '미국'}
+                      </Text>
+                    </button>
+                  );
+                })}
+              </div>
+              <List>
+                {browse.items
+                  .filter((r) => !codes.includes(r.code))
+                  .map((r) => (
+                    <PickRow key={r.code} row={r} onAdd={() => add(r.code, r.etf_meta?.name ?? r.code)} />
+                  ))}
+              </List>
+              <LoadMore onVisible={browse.loadMore} hasMore={browse.hasMore} loading={browse.loadingMore} />
+            </>
           )}
         </>
       )}
@@ -182,14 +241,6 @@ export function ComparePage() {
           <AdGate cta="광고 보고 비교 결과 보기" onRewardGranted={() => setRevealed(true)} />
         </div>
       )}
-      {codes.length < 2 && (
-        <div style={{ marginTop: 24, textAlign: 'center' }}>
-          <Text typography="t7" color={colors.grey400}>
-            2개 이상 선택하면 비교할 수 있어요.
-          </Text>
-        </div>
-      )}
-
       {/* 결과 */}
       {revealed && compare.loading && (
         <div style={{ marginTop: 24, textAlign: 'center' }}>

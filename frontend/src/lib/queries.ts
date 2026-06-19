@@ -27,6 +27,7 @@ export async function fetchTopList(
   mode: ListMode,
   market: Market = 'KR',
   limit = 30,
+  offset = 0,
 ): Promise<EtfListRow[]> {
   const date = await latestDate();
   if (!date) return [];
@@ -36,7 +37,10 @@ export async function fetchTopList(
       : mode === 'gainers'
         ? 'change_pct.desc'
         : 'change_pct.asc';
-  const q = `${LIST_SELECT}&date=eq.${date}&etf_meta.market=eq.${market}&order=${order}&limit=${limit}`;
+  // 동순위 안정 정렬을 위해 code 보조키 추가(offset 페이지네이션 일관성)
+  const q =
+    `${LIST_SELECT}&date=eq.${date}&etf_meta.market=eq.${market}` +
+    `&order=${order},code.asc&limit=${limit}&offset=${offset}`;
   return selectFrom('etf_daily_quote', q);
 }
 

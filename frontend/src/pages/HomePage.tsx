@@ -1,9 +1,10 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useCallback, useState } from 'react';
 import { List, Text } from '@toss/tds-mobile';
 import { colors } from '@toss/tds-colors';
 import { ListRow } from '@/components/ListRow';
 import { BannerSlot } from '@/components/BannerSlot';
-import { useAsync } from '@/hooks/useAsync';
+import { LoadMore } from '@/components/LoadMore';
+import { useInfiniteList } from '@/hooks/useInfiniteList';
 import { fetchTopList, type ListMode } from '@/lib/queries';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import type { Market } from '@/types/etf';
@@ -13,11 +14,20 @@ const TABS: { mode: ListMode; label: string }[] = [
   { mode: 'gainers', label: '상승' },
   { mode: 'losers', label: '하락' },
 ];
+const PAGE = 30;
 
 export function HomePage() {
   const [market, setMarket] = useState<Market>('KR');
   const [mode, setMode] = useState<ListMode>('volume');
-  const { data, loading, error } = useAsync(() => fetchTopList(mode, market, 30), [mode, market]);
+  const fetchPage = useCallback(
+    (offset: number) => fetchTopList(mode, market, PAGE, offset),
+    [mode, market],
+  );
+  const { items, loading, loadingMore, hasMore, error, loadMore } = useInfiniteList(
+    fetchPage,
+    [mode, market],
+    PAGE,
+  );
 
   return (
     <div style={{ padding: '20px 16px 88px', maxWidth: 560, margin: '0 auto' }}>
@@ -98,13 +108,14 @@ export function HomePage() {
       {error && <Notice>오류: {error}</Notice>}
 
       <List>
-        {data?.map((row, i) => (
+        {items.map((row, i) => (
           <Fragment key={row.code}>
             <ListRow row={row} />
             {i === 6 && <BannerSlot />}
           </Fragment>
         ))}
       </List>
+      <LoadMore onVisible={loadMore} hasMore={hasMore} loading={loadingMore} />
     </div>
   );
 }
