@@ -2,7 +2,7 @@ import type { ComponentType } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Text } from '@toss/tds-mobile';
 import { colors } from '@toss/tds-colors';
-import { CompareIcon, HomeIcon, SearchIcon } from '@/components/icons';
+import { CompareIcon, HomeIcon } from '@/components/icons';
 
 interface NavItem {
   path: string;
@@ -12,7 +12,6 @@ interface NavItem {
 
 const ITEMS: NavItem[] = [
   { path: '/', label: '홈', Icon: HomeIcon },
-  { path: '/search', label: '검색', Icon: SearchIcon },
   { path: '/compare', label: '비교', Icon: CompareIcon },
 ];
 

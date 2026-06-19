@@ -3,9 +3,10 @@ import { List, ListRow as TdsListRow, Text, TextField } from '@toss/tds-mobile';
 import { colors } from '@toss/tds-colors';
 import { AdGate } from '@/components/AdGate';
 import { LoadMore } from '@/components/LoadMore';
+import { FilterChips } from '@/components/FilterChips';
 import { useAsync } from '@/hooks/useAsync';
 import { useInfiniteList } from '@/hooks/useInfiniteList';
-import { fetchCompareData, fetchTopList, searchByName } from '@/lib/queries';
+import { fetchCompareData, fetchTopList, searchEtfs } from '@/lib/queries';
 import { marketCap, pct, price, signColor } from '@/lib/format';
 import type { DetailBundle } from '@/lib/queries';
 import type { EtfListRow, Market } from '@/types/etf';
@@ -89,10 +90,12 @@ export function ComparePage() {
   const [picked, setPicked] = useState<Picked[]>([]);
   const [input, setInput] = useState('');
   const [query, setQuery] = useState('');
+  const [tag, setTag] = useState<string | null>(null);
   const [revealed, setRevealed] = useState(false);
 
   const codes = picked.map((p) => p.code);
   const codesKey = codes.join(',');
+  const isSearching = Boolean(query.trim() || tag);
 
   const [browseMarket, setBrowseMarket] = useState<Market>('KR');
   const browseFetch = useCallback(
@@ -101,7 +104,7 @@ export function ComparePage() {
   );
   const browse = useInfiniteList(browseFetch, [browseMarket], PAGE);
 
-  const search = useAsync(() => (query.trim() ? searchByName(query, 20) : Promise.resolve([])), [query]);
+  const search = useAsync(() => searchEtfs(query, tag), [query, tag]);
   const compare = useAsync(
     () => (revealed && codes.length >= 2 ? fetchCompareData(codes) : Promise.resolve([])),
     [revealed, codesKey],
@@ -113,6 +116,7 @@ export function ComparePage() {
     setRevealed(false);
     setInput('');
     setQuery('');
+    setTag(null);
   };
   const remove = (code: string) => {
     setPicked((cur) => cur.filter((p) => p.code !== code));
@@ -179,7 +183,22 @@ export function ComparePage() {
             />
           </form>
 
-          {query.trim() ? (
+          {/* 카테고리 칩 (공유 컴포넌트) */}
+          <FilterChips
+            activeTag={tag}
+            onPickTheme={(t) => {
+              setTag(null);
+              setInput(t);
+              setQuery(t);
+            }}
+            onPickTag={(t) => {
+              setInput('');
+              setQuery('');
+              setTag((cur) => (cur === t ? null : t));
+            }}
+          />
+
+          {isSearching ? (
             // 검색 결과
             <div style={{ marginTop: 6 }}>
               <List>

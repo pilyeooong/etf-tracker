@@ -66,14 +66,15 @@
 | 영어 | `Etf today` | 9자, 첫 글자만 대문자 |
 | URL | `intoss://etf-insight/` | 홈 진입 |
 
-기능 ② — 검색 (딥링크)
+기능 ② — 비교 (딥링크)
 | 항목 | 입력값 | 메모 |
 |---|---|---|
-| 한국어 | `ETF 검색` | 6자 |
-| 영어 | `Etf search` | 10자, 첫 글자만 대문자 |
-| URL | `intoss://etf-insight/search` | 검색 화면 직접 진입 (`/search` 매핑) |
+| 한국어 | `ETF 비교` | 5자 |
+| 영어 | `Etf compare` | 11자, 첫 글자만 대문자 |
+| URL | `intoss://etf-insight/compare` | 비교 화면 직접 진입 (`/compare` 매핑) |
 
-> 라우팅: App은 **BrowserRouter** + `<Route path="/search">` / `<Route path="/etf/:code">`. 토스 웹뷰가 `intoss://etf-insight/<path>`로 진입하면 해당 경로로 바로 렌더됨(SPA, index.html 폴백). `intoss://etf-insight/etf/SPY` 같은 종목 딥링크도 동작.
+> 라우팅: App은 **BrowserRouter** + `<Route path="/compare">` / `<Route path="/etf/:code">` + 미정의 경로는 홈으로(catch-all). 토스 웹뷰가 `intoss://etf-insight/<path>`로 진입하면 해당 경로로 바로 렌더됨(SPA, index.html 폴백). `intoss://etf-insight/etf/SPY` 같은 종목 딥링크도 동작.
+> 탭 구성: **홈 / 비교** 2탭. 검색은 별도 탭 없이 홈에 통합(검색창+테마/유형 칩).
 
 ## 검색 키워드
 

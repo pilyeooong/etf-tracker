@@ -70,6 +70,22 @@ export async function searchByHolding(query: string, limit = 40): Promise<EtfLis
   );
 }
 
+// 통합 검색: 태그 선택 시 태그검색, 아니면 이름 + 종목 역검색 합쳐서 dedup (홈·비교 공유)
+export async function searchEtfs(query: string, tag: string | null): Promise<EtfListRow[]> {
+  if (tag) return searchByTag(tag, 50);
+  const q = query.trim();
+  if (!q) return [];
+  const [byName, byHolding] = await Promise.all([searchByName(q, 40), searchByHolding(q, 40)]);
+  const seen = new Set<string>();
+  const merged: EtfListRow[] = [];
+  for (const r of [...byName, ...byHolding]) {
+    if (seen.has(r.code)) continue;
+    seen.add(r.code);
+    merged.push(r);
+  }
+  return merged;
+}
+
 export async function searchByTag(tag: string, limit = 40): Promise<EtfListRow[]> {
   const date = await latestDate();
   if (!date) return [];
