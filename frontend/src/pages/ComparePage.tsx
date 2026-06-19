@@ -4,6 +4,7 @@ import { colors } from '@toss/tds-colors';
 import { AdGate } from '@/components/AdGate';
 import { LoadMore } from '@/components/LoadMore';
 import { FilterChips } from '@/components/FilterChips';
+import { MarketToggle } from '@/components/MarketToggle';
 import { useAsync } from '@/hooks/useAsync';
 import { useInfiniteList } from '@/hooks/useInfiniteList';
 import { fetchCompareData, fetchTopList, searchEtfs } from '@/lib/queries';
@@ -125,13 +126,13 @@ export function ComparePage() {
 
   return (
     <div style={{ padding: '20px 16px 88px', maxWidth: 560, margin: '0 auto' }}>
-      <div style={{ marginBottom: 4 }}>
-        <Text typography="t4" fontWeight="bold" color={colors.grey900}>
+      <div>
+        <Text typography="t3" fontWeight="bold" color={colors.grey900}>
           ETF 비교
         </Text>
       </div>
-      <div style={{ marginBottom: 14 }}>
-        <Text typography="st12" color={colors.grey500}>
+      <div style={{ margin: '2px 0 14px' }}>
+        <Text typography="t7" color={colors.grey500}>
           최대 {MAX}개까지 골라 한눈에 비교하고 구성종목 겹침까지 확인해요.
         </Text>
       </div>
@@ -219,28 +220,7 @@ export function ComparePage() {
           ) : (
             // 둘러보기 (거래량순, 페이지네이션)
             <>
-              <div style={{ display: 'flex', gap: 8, margin: '14px 0 4px' }}>
-                {(['KR', 'US'] as Market[]).map((m) => {
-                  const on = browseMarket === m;
-                  return (
-                    <button
-                      key={m}
-                      onClick={() => setBrowseMarket(m)}
-                      style={{
-                        padding: '6px 14px',
-                        borderRadius: 999,
-                        border: 'none',
-                        cursor: 'pointer',
-                        background: on ? colors.grey900 : colors.grey100,
-                      }}
-                    >
-                      <Text typography="st12" fontWeight="bold" color={on ? colors.white : colors.grey600}>
-                        {m === 'KR' ? '국내' : '미국'}
-                      </Text>
-                    </button>
-                  );
-                })}
-              </div>
+              <MarketToggle market={browseMarket} onChange={setBrowseMarket} style={{ margin: '16px 0 8px' }} />
               <List>
                 {browse.items
                   .filter((r) => !codes.includes(r.code))

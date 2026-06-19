@@ -5,6 +5,7 @@ import { ListRow } from '@/components/ListRow';
 import { BannerSlot } from '@/components/BannerSlot';
 import { LoadMore } from '@/components/LoadMore';
 import { FilterChips } from '@/components/FilterChips';
+import { MarketToggle } from '@/components/MarketToggle';
 import { useAsync } from '@/hooks/useAsync';
 import { useInfiniteList } from '@/hooks/useInfiniteList';
 import { fetchTopList, searchEtfs, type ListMode } from '@/lib/queries';
@@ -95,35 +96,7 @@ export function HomePage() {
       ) : (
         // 기본: 국내/미국 + 거래량/상승/하락 둘러보기 (페이지네이션)
         <>
-          <div
-            style={{
-              display: 'flex',
-              background: colors.grey100,
-              borderRadius: 10,
-              padding: 3,
-              margin: '16px 0 12px',
-            }}
-          >
-            {(['KR', 'US'] as Market[]).map((m) => (
-              <button
-                key={m}
-                onClick={() => setMarket(m)}
-                style={{
-                  flex: 1,
-                  padding: '9px 0',
-                  borderRadius: 8,
-                  border: 'none',
-                  cursor: 'pointer',
-                  background: market === m ? colors.white : 'transparent',
-                  boxShadow: market === m ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                }}
-              >
-                <Text typography="t7" fontWeight="bold" color={market === m ? colors.grey900 : colors.grey500}>
-                  {m === 'KR' ? '국내' : '미국'}
-                </Text>
-              </button>
-            ))}
-          </div>
+          <MarketToggle market={market} onChange={setMarket} style={{ margin: '16px 0 12px' }} />
 
           <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
             {TABS.map((t) => {
