@@ -19,11 +19,18 @@ export function HomeIcon({ size = 24, color = 'currentColor', strokeWidth = 2 }:
   );
 }
 
-export function SearchIcon({ size = 24, color = 'currentColor', strokeWidth = 2 }: IconProps) {
+export function BackIcon({ size = 24, color = 'currentColor', strokeWidth = 2 }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="11" cy="11" r="6.5" stroke={color} strokeWidth={strokeWidth} />
-      <path d="m16.5 16.5 3.5 3.5" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+      <path d="m14 6-6 6 6 6" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function CloseIcon({ size = 24, color = 'currentColor', strokeWidth = 2 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="m6 6 12 12M18 6 6 18" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
     </svg>
   );
 }

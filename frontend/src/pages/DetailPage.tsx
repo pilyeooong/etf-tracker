@@ -2,6 +2,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Text } from '@toss/tds-mobile';
 import { colors } from '@toss/tds-colors';
 import { BannerSlot } from '@/components/BannerSlot';
+import { BackIcon } from '@/components/icons';
 import { AD_IDS } from '@/lib/ads';
 import { useAsync } from '@/hooks/useAsync';
 import { fetchDetailBundle } from '@/lib/queries';
@@ -57,9 +58,10 @@ export function DetailPage() {
     <div style={{ padding: '8px 16px 88px', maxWidth: 560, margin: '0 auto' }}>
       <button
         onClick={() => navigate(-1)}
-        style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', padding: '8px 0', color: '#4e5968' }}
+        aria-label="뒤로"
+        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px 4px 8px 0', display: 'inline-flex' }}
       >
-        ←
+        <BackIcon size={24} color={colors.grey700} />
       </button>
 
       {/* 헤더 */}

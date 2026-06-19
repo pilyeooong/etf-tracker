@@ -5,6 +5,7 @@ import { AdGate } from '@/components/AdGate';
 import { LoadMore } from '@/components/LoadMore';
 import { FilterChips } from '@/components/FilterChips';
 import { MarketToggle } from '@/components/MarketToggle';
+import { CloseIcon } from '@/components/icons';
 import { useAsync } from '@/hooks/useAsync';
 import { useInfiniteList } from '@/hooks/useInfiniteList';
 import { fetchCompareData, fetchTopList, searchEtfs } from '@/lib/queries';
@@ -92,11 +93,12 @@ export function ComparePage() {
   const [input, setInput] = useState('');
   const [query, setQuery] = useState('');
   const [tag, setTag] = useState<string | null>(null);
+  const [theme, setTheme] = useState<string | null>(null);
   const [revealed, setRevealed] = useState(false);
 
   const codes = picked.map((p) => p.code);
   const codesKey = codes.join(',');
-  const isSearching = Boolean(query.trim() || tag);
+  const isSearching = Boolean(query.trim() || tag || theme);
 
   const [browseMarket, setBrowseMarket] = useState<Market>('KR');
   const browseFetch = useCallback(
@@ -105,7 +107,7 @@ export function ComparePage() {
   );
   const browse = useInfiniteList(browseFetch, [browseMarket], PAGE);
 
-  const search = useAsync(() => searchEtfs(query, tag), [query, tag]);
+  const search = useAsync(() => searchEtfs(theme ?? query, tag), [query, tag, theme]);
   const compare = useAsync(
     () => (revealed && codes.length >= 2 ? fetchCompareData(codes) : Promise.resolve([])),
     [revealed, codesKey],
@@ -118,6 +120,7 @@ export function ComparePage() {
     setInput('');
     setQuery('');
     setTag(null);
+    setTheme(null);
   };
   const remove = (code: string) => {
     setPicked((cur) => cur.filter((p) => p.code !== code));
@@ -159,11 +162,23 @@ export function ComparePage() {
               <Text typography="st12" fontWeight="bold" color={colors.blue600}>
                 {p.name}
               </Text>
-              <Text typography="st12" color={colors.blue500}>
-                ✕
-              </Text>
+              <CloseIcon size={14} color={colors.blue500} />
             </button>
           ))}
+        </div>
+      )}
+
+      {/* 비교 실행 (리워드 게이트) — 2개 이상이면 칩 바로 아래에 노출(리스트에 묻히지 않게) */}
+      {codes.length >= 2 && !revealed && (
+        <div style={{ marginBottom: 18 }}>
+          <AdGate cta="광고 보고 비교 결과 보기" onRewardGranted={() => setRevealed(true)} />
+          {picked.length < MAX && (
+            <div style={{ marginTop: 8, textAlign: 'center' }}>
+              <Text typography="st13" color={colors.grey400}>
+                아래에서 {MAX}개까지 더 담을 수 있어요
+              </Text>
+            </div>
+          )}
         </div>
       )}
 
@@ -173,6 +188,8 @@ export function ComparePage() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
+              setTag(null);
+              setTheme(null);
               setQuery(input);
             }}
           >
@@ -186,15 +203,18 @@ export function ComparePage() {
 
           {/* 카테고리 칩 (공유 컴포넌트) */}
           <FilterChips
+            activeTheme={theme}
             activeTag={tag}
             onPickTheme={(t) => {
+              setInput('');
+              setQuery('');
               setTag(null);
-              setInput(t);
-              setQuery(t);
+              setTheme((cur) => (cur === t ? null : t));
             }}
             onPickTag={(t) => {
               setInput('');
               setQuery('');
+              setTheme(null);
               setTag((cur) => (cur === t ? null : t));
             }}
           />
@@ -234,12 +254,6 @@ export function ComparePage() {
         </>
       )}
 
-      {/* 비교 실행 (리워드 게이트) */}
-      {codes.length >= 2 && !revealed && (
-        <div style={{ marginTop: 20 }}>
-          <AdGate cta="광고 보고 비교 결과 보기" onRewardGranted={() => setRevealed(true)} />
-        </div>
-      )}
       {/* 결과 */}
       {revealed && compare.loading && (
         <div style={{ marginTop: 24, textAlign: 'center' }}>

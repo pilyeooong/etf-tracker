@@ -5,6 +5,10 @@
 
 const IS_PROD = import.meta.env.MODE === 'production';
 
+// 개발 목(mock) 광고 모드. 실제 광고 SDK가 없는 브라우저(dev)에서 광고 '위치/타이밍/흐름'을
+// 눈으로 확인하기 위한 가짜 광고를 켜요. 프로덕션 빌드에서는 항상 false → 절대 노출 안 됨.
+export const AD_MOCK = import.meta.env.DEV;
+
 function adId(testId: string, prodId: string | undefined): string {
   // dev/sandbox: 항상 테스트 ID / prod: 주입된 prod ID(없으면 테스트 폴백)
   return IS_PROD ? prodId || testId : testId;

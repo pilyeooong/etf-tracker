@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { loadFullScreenAd, showFullScreenAd } from '@apps-in-toss/web-framework';
-import { AD_IDS } from '@/lib/ads';
+import { AD_IDS, AD_MOCK } from '@/lib/ads';
+import { showMockFullScreenAd } from '@/lib/mockAd';
 
 // 보상형 광고 (인앱 광고 2.0 ver2). 전면형과 동일 API, adGroupId로 타입 결정.
 // 미지원 환경(브라우저/구버전 토스앱)에서는 광고 없이 즉시 보상 처리(개발·폴백).
@@ -39,9 +40,14 @@ export function useRewardedAd() {
 
   const showAd = useCallback(() => {
     if (status !== 'loaded') return;
-    // 미지원 환경: 광고 없이 즉시 보상
+    // 미지원 환경: dev는 목 광고 재생 후 보상, prod는 광고 없이 즉시 보상
     if (!isSupported.current) {
-      setStatus('rewarded');
+      if (AD_MOCK) {
+        setStatus('showing');
+        showMockFullScreenAd('보상형', 3).then(() => setStatus('rewarded'));
+      } else {
+        setStatus('rewarded');
+      }
       return;
     }
     setStatus('showing');

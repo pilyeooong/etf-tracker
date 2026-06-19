@@ -25,10 +25,12 @@ export function HomePage() {
   const [input, setInput] = useState('');
   const [query, setQuery] = useState('');
   const [tag, setTag] = useState<string | null>(null);
+  const [theme, setTheme] = useState<string | null>(null);
 
-  const isSearching = Boolean(query.trim() || tag);
+  const isSearching = Boolean(query.trim() || tag || theme);
 
-  const result = useAsync(() => searchEtfs(query, tag), [query, tag]);
+  // 테마는 입력창을 채우지 않고 키워드로만 검색에 반영(활성 칩으로 표시)
+  const result = useAsync(() => searchEtfs(theme ?? query, tag), [query, tag, theme]);
   const fetchPage = useCallback(
     (offset: number) => fetchTopList(mode, market, PAGE, offset),
     [mode, market],
@@ -53,6 +55,7 @@ export function HomePage() {
         onSubmit={(e) => {
           e.preventDefault();
           setTag(null);
+          setTheme(null);
           setQuery(input);
         }}
       >
@@ -66,15 +69,18 @@ export function HomePage() {
 
       {/* 카테고리 칩 (공유 컴포넌트) */}
       <FilterChips
+        activeTheme={theme}
         activeTag={tag}
         onPickTheme={(t) => {
+          setInput('');
+          setQuery('');
           setTag(null);
-          setInput(t);
-          setQuery(t);
+          setTheme((cur) => (cur === t ? null : t));
         }}
         onPickTag={(t) => {
           setInput('');
           setQuery('');
+          setTheme(null);
           setTag((cur) => (cur === t ? null : t));
         }}
       />
