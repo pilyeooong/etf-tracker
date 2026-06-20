@@ -65,6 +65,9 @@ create table if not exists etf_detail (
   chase_error_rate   numeric,   -- 추적오차(%)
   dividend_yield     numeric,   -- 분배수익률 TTM(%)
   dividend_per_share numeric,
+  dividend_count_year integer,  -- 올해 분배 지급 횟수 (KR)
+  dividend_months    text,      -- 올해 지급 월 "1,4,7,10" (KR)
+  net_inflow         jsonb,     -- 순유입 흐름(cumulativeNetInflowList, KR만; US는 null)
   summary            text,
   returns            jsonb,     -- [{period,value}]
   sector_portfolio   jsonb,     -- [{code,weight}]
@@ -72,6 +75,11 @@ create table if not exists etf_detail (
   country_portfolio  jsonb,
   updated_at         timestamptz default now()
 );
+-- 기존 DB 호환(추가 전용): 위 컬럼이 없던 DB에도 안전하게 반영
+alter table etf_detail
+  add column if not exists dividend_count_year integer,
+  add column if not exists dividend_months     text,
+  add column if not exists net_inflow          jsonb;
 
 -- ─────────────────────────────────────────────
 -- 4. 분배금 (발생일에만)

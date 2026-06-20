@@ -5,7 +5,7 @@ import { AdGate } from '@/components/AdGate';
 import { useAsync } from '@/hooks/useAsync';
 import { fetchPeerComparison } from '@/lib/queries';
 import type { PeerComparison, PeerMetric } from '@/lib/queries';
-import type { EtfDetail, EtfHolding, EtfMeta } from '@/types/etf';
+import type { EtfDetail, EtfHolding, EtfMeta, Market, NetInflow } from '@/types/etf';
 
 // 리워드 게이트 + 지연 페치 래퍼. 상세 화면에 그대로 꽂아 써요(자체 훅 보유).
 export function DeepAnalysisSection({
@@ -25,7 +25,9 @@ export function DeepAnalysisSection({
 
   const hasConc = holdings.filter((h) => h.weight != null && h.weight > 0).length >= 3;
   const maybeHasPeer = Boolean(meta.base_index || meta.category);
-  if (!maybeHasPeer && !hasConc) return null; // 분석할 재료가 전혀 없으면 섹션 숨김
+  const hasDiv = Boolean(detail?.dividend_months);
+  const hasFlow = Boolean(detail?.net_inflow);
+  if (!maybeHasPeer && !hasConc && !hasDiv && !hasFlow) return null; // 재료가 전혀 없으면 숨김
 
   return (
     <div style={{ marginTop: 24 }}>
@@ -38,7 +40,7 @@ export function DeepAnalysisSection({
         <>
           <div style={{ marginBottom: 12, lineHeight: 1.6 }}>
             <Text typography="st12" color={colors.grey500}>
-              동종 ETF 중 비용·분배수익률 위치와 구성 집중도를 광고 시청 후 확인할 수 있어요.
+              동종 ETF 중 위치·구성 집중도, 분배 캘린더와 자금 유입 흐름을 광고 시청 후 확인할 수 있어요.
             </Text>
           </div>
           <AdGate cta="광고 보고 심화 분석 보기" onRewardGranted={() => setRevealed(true)} />
@@ -47,8 +49,13 @@ export function DeepAnalysisSection({
         <Text typography="st12" color={colors.grey500}>
           분석 중…
         </Text>
-      ) : comparison.data || hasConc ? (
-        <DeepAnalysis comparison={comparison.data ?? null} holdings={holdings} />
+      ) : comparison.data || hasConc || hasDiv || hasFlow ? (
+        <DeepAnalysis
+          comparison={comparison.data ?? null}
+          holdings={holdings}
+          detail={detail}
+          market={meta.market}
+        />
       ) : (
         <Text typography="st12" color={colors.grey400}>
           동종 그룹 데이터가 부족해 분석을 제공하기 어려워요.
@@ -63,15 +70,21 @@ export function DeepAnalysisSection({
 export function DeepAnalysis({
   comparison,
   holdings,
+  detail,
+  market,
 }: {
   comparison: PeerComparison | null;
   holdings: EtfHolding[];
+  detail?: EtfDetail | null;
+  market?: Market;
 }) {
   const weighted = holdings.filter((h) => h.weight != null && h.weight > 0);
   const top10 = weighted.reduce((a, h) => a + (h.weight ?? 0), 0);
   const top3 = weighted.slice(0, 3).reduce((a, h) => a + (h.weight ?? 0), 0);
   const hasConc = weighted.length >= 3;
   const concLabel = top3 >= 55 ? '집중형' : top3 >= 30 ? '보통' : '분산형';
+
+  const anyAbove = Boolean(comparison) || hasConc;
 
   return (
     <div>
@@ -111,8 +124,161 @@ export function DeepAnalysis({
           </div>
         </div>
       )}
+
+      <DividendCalendar detail={detail} topMargin={anyAbove ? 26 : 0} />
+      {market !== 'US' && <NetFlow flow={detail?.net_inflow ?? null} />}
     </div>
   );
+}
+
+// 분배 캘린더: 올해 지급 월·횟수 + TTM 분배수익률·주당분배금. 빈도 라벨은 확실할 때만(허위 단정 회피).
+// 지급 월 데이터(KR)가 있을 때만 렌더. US는 월/횟수가 없고 분배 정보가 헤더에 이미 있어 숨김.
+function DividendCalendar({ detail, topMargin }: { detail?: EtfDetail | null; topMargin: number }) {
+  if (!detail) return null;
+  const months = parseMonths(detail.dividend_months);
+  if (months.length === 0) return null;
+  const label = freqLabel(months);
+
+  return (
+    <div style={{ marginTop: topMargin }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 12 }}>
+        <Text typography="st11" fontWeight="bold" color={colors.grey900}>
+          분배 캘린더
+        </Text>
+        {label && (
+          <Text typography="st12" fontWeight="bold" color={colors.blue500}>
+            {label}
+          </Text>
+        )}
+      </div>
+
+      {months.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+          {Array.from({ length: 12 }, (_, i) => i + 1).map((mo) => {
+            const on = months.includes(mo);
+            return (
+              <div
+                key={mo}
+                style={{
+                  minWidth: 34,
+                  textAlign: 'center',
+                  padding: '5px 0',
+                  borderRadius: 8,
+                  background: on ? colors.blue50 : colors.grey50,
+                }}
+              >
+                <Text
+                  typography="st13"
+                  fontWeight={on ? 'bold' : 'regular'}
+                  color={on ? colors.blue500 : colors.grey400}
+                >
+                  {mo}월
+                </Text>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div style={{ display: 'flex', gap: 10 }}>
+        {detail.dividend_yield != null && (
+          <ConcCell label="분배수익률(TTM)" value={detail.dividend_yield} suffix="%" />
+        )}
+        {detail.dividend_count_year != null && (
+          <ConcCell label="올해 지급" value={detail.dividend_count_year} suffix="회" decimals={0} />
+        )}
+      </div>
+      {detail.dividend_per_share != null && (
+        <div style={{ marginTop: 8 }}>
+          <Text typography="st13" color={colors.grey400}>
+            주당 분배금(TTM) {Math.round(detail.dividend_per_share).toLocaleString()}원
+          </Text>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// 자금흐름: 최근 순유입(1주/1개월/3개월). 1개월 부호로 유입/유출세 라벨. KR만.
+function NetFlow({ flow }: { flow: NetInflow | null }) {
+  if (!flow) return null;
+  const rows: { label: string; value?: string | null }[] = [
+    { label: '최근 1주', value: flow.cumulativeNetInflow1w },
+    { label: '최근 1개월', value: flow.cumulativeNetInflow1m },
+    { label: '최근 3개월', value: flow.cumulativeNetInflow3m },
+  ].filter((r) => r.value);
+  if (rows.length === 0) return null;
+  const sign = flowSign(flow.cumulativeNetInflow1m);
+  const tone = sign > 0 ? '유입세' : sign < 0 ? '유출세' : null;
+
+  return (
+    <div style={{ marginTop: 26 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 12 }}>
+        <Text typography="st11" fontWeight="bold" color={colors.grey900}>
+          자금 흐름
+        </Text>
+        {tone && (
+          <Text typography="st12" fontWeight="bold" color={sign > 0 ? colors.blue500 : colors.red500}>
+            최근 한 달 {tone}
+          </Text>
+        )}
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {rows.map((r) => {
+          const s = flowSign(r.value);
+          return (
+            <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <Text typography="st12" color={colors.grey500}>
+                {r.label}
+              </Text>
+              <Text
+                typography="st12"
+                fontWeight="bold"
+                color={s < 0 ? colors.red500 : s > 0 ? colors.blue500 : colors.grey700}
+              >
+                {s > 0 ? '+' : ''}
+                {r.value}
+              </Text>
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ marginTop: 8 }}>
+        <Text typography="st13" color={colors.grey400}>
+          순유입은 설정·환매로 늘고 준 순자산 변화예요. 가격 등락과는 달라요.
+        </Text>
+      </div>
+    </div>
+  );
+}
+
+// "1,4,7,10" → [1,4,7,10] (1~12만, 정렬·중복 제거)
+function parseMonths(raw: string | null | undefined): number[] {
+  if (!raw) return [];
+  const set = new Set<number>();
+  for (const part of raw.split(',')) {
+    const n = parseInt(part.trim(), 10);
+    if (n >= 1 && n <= 12) set.add(n);
+  }
+  return [...set].sort((a, b) => a - b);
+}
+
+// 확실한 패턴만 라벨링: 연속 4개월↑=월, 모두 3개월 간격=분기. 애매하면 null.
+function freqLabel(months: number[]): string | null {
+  if (months.length < 2) return null;
+  const gaps = months.slice(1).map((m, i) => m - months[i]);
+  if (gaps.every((g) => g === 1) && months.length >= 4) return '월배당';
+  if (gaps.every((g) => g === 3)) return '분기배당';
+  return null;
+}
+
+// 순유입 문자열 부호(유출은 '-' 접두). 0이면 0.
+function flowSign(s: string | null | undefined): number {
+  if (!s) return 0;
+  const t = s.trim();
+  if (t.startsWith('-')) return -1;
+  if (/^0(억|만|원|조)?$/.test(t) || t === '0') return 0;
+  return 1;
 }
 
 function MetricRow({ m }: { m: PeerMetric }) {
@@ -168,7 +334,17 @@ function MetricRow({ m }: { m: PeerMetric }) {
   );
 }
 
-function ConcCell({ label, value }: { label: string; value: number }) {
+function ConcCell({
+  label,
+  value,
+  suffix = '%',
+  decimals = 1,
+}: {
+  label: string;
+  value: number;
+  suffix?: string;
+  decimals?: number;
+}) {
   return (
     <div style={{ flex: 1, background: colors.grey50, borderRadius: 12, padding: '12px 14px' }}>
       <div style={{ marginBottom: 4 }}>
@@ -177,7 +353,8 @@ function ConcCell({ label, value }: { label: string; value: number }) {
         </Text>
       </div>
       <Text typography="t5" fontWeight="bold" color={colors.grey900}>
-        {value.toFixed(1)}%
+        {value.toFixed(decimals)}
+        {suffix}
       </Text>
     </div>
   );

@@ -37,6 +37,18 @@ export interface PeriodReturn {
   value: number | null;
 }
 
+// 순유입 흐름(네이버 cumulativeNetInflowList) — 값은 사전 포맷된 한글 문자열("1조 6,058억"), 유출 시 '-' 접두. KR만 존재.
+export interface NetInflow {
+  referenceDate?: string | null;
+  cumulativeNetInflow1d?: string | null;
+  cumulativeNetInflow1w?: string | null;
+  cumulativeNetInflow1m?: string | null;
+  cumulativeNetInflow3m?: string | null;
+  cumulativeNetInflow6m?: string | null;
+  cumulativeNetInflowYtd?: string | null;
+  cumulativeNetInflow1y?: string | null;
+}
+
 export interface EtfDetail {
   code: string;
   nav: number | null;
@@ -44,6 +56,9 @@ export interface EtfDetail {
   chase_error_rate: number | null;
   dividend_yield: number | null;
   dividend_per_share: number | null;
+  dividend_count_year: number | null; // 올해 분배 지급 횟수 (KR)
+  dividend_months: string | null; // 올해 지급 월 "1,4,7,10" (KR)
+  net_inflow: NetInflow | null; // 순유입 흐름 (KR; US는 null)
   summary: string | null;
   returns: PeriodReturn[];
   sector_portfolio: PortfolioSlice[];

@@ -97,9 +97,10 @@ ETF, 이티에프, 미국ETF, 배당ETF, S&P500, 나스닥, 반도체ETF, 괴리
 | **배너(인라인)** | 홈 리스트 중간(7행 뒤) | 스크롤 시 자연 노출 | `BannerSlot.tsx` (`TossAds.attachBanner`, variant card) |
 | **배너 이미지(네이티브)** | 상세 본문 중간(기간수익률 뒤) | 스크롤 시 자연 노출 | `BannerSlot inline` (`AD_IDS.nativeImage`) |
 | **전면(Interstitial)** | 리스트→상세 진입 전환 | 세션 첫 3회 무광고 + 이후 최소 3분 간격 | `interstitial.ts` (`loadFullScreenAd`/`showFullScreenAd`) |
-| **리워드(보상형)** | 상세 화면 **심화 분석**(동종 그룹 위치·구성 집중도) 잠금 해제 | 사용자가 직접 '광고 보고 심화 분석 보기' 탭할 때만 | `DeepAnalysis.tsx`+`useRewardedAd.ts` (`userEarnedReward`) |
+| **리워드(보상형)** | 상세 화면 **심화 분석**(동종 그룹 위치·구성 집중도·분배 캘린더·자금 유입 흐름) 잠금 해제 | 사용자가 직접 '광고 보고 심화 분석 보기' 탭할 때만 | `DeepAnalysis.tsx`+`useRewardedAd.ts` (`userEarnedReward`) |
 
 - **비교 기능은 무료**(리워드 게이트 제거). 리워드는 "보유 데이터로 산출하는 심화 분석"이라는 명확한 보너스 보상에만 사용 → 핵심 기능 차단(다크패턴) 회피.
+- **심화 분석 구성**(상세 화면, 단일 종목): ① 동종 그룹 내 비용·분배수익률·추적오차 순위 ② 구성 집중도(상위3/10 비중) ③ 분배 캘린더(지급 월·횟수·TTM 분배수익률, KR) ④ 자금 흐름(최근 순유입 1주/1개월/3개월 + 유입/유출세, KR). 미국 ETF는 ①②만(분배 월·자금흐름 데이터 미제공). 모두 객관적 사실 통계이며 매수·매도 권유 아님.
 - **개발 환경 목 광고**(`AD_MOCK=import.meta.env.DEV`): 브라우저에선 배너 placeholder + 전면/보상형 풀스크린 목 오버레이로 위치·흐름 확인 가능. 프로덕션 빌드에선 항상 꺼짐.
 - **광고 그룹 ID**: 코드 기본값은 테스트 ID(`ait-ad-test-*`). 출시 시 콘솔 발급 prod ID를 `frontend/.env`의 `VITE_AD_BANNER_ID`/`VITE_AD_NATIVE_ID`/`VITE_AD_INTERSTITIAL_ID`/`VITE_AD_REWARDED_ID`로 주입.
 - **SSP 정책 준수**: 진입 직후·ATF 첫 화면 광고 X, 스크린당 동일 포맷 1구좌, 광고 'ad' 표기·표준 컴포넌트 그대로, 클릭 보상 문구 X(보상형은 '시청 완료 시 언락'), 리프레시·리디렉션 변조 X.
