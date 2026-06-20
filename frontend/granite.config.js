@@ -4,7 +4,7 @@ export default defineConfig({
     brand: {
         displayName: 'ETF 인사이트',
         primaryColor: '#3182F6',
-        icon: '',
+        icon: 'https://static.toss.im/appsintoss/5045/6bbe3f8b-fa6d-4a7e-a163-e20fc327d3ac.png',
     },
     web: {
         host: '192.168.0.5',
