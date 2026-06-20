@@ -1,5 +1,5 @@
 import { loadFullScreenAd, showFullScreenAd } from '@apps-in-toss/web-framework';
-import { AD_IDS, AD_MOCK } from '@/lib/ads';
+import { AD_IDS, AD_MOCK, isFullScreenAdSupported } from '@/lib/ads';
 import { showMockFullScreenAd } from '@/lib/mockAd';
 
 // 전면 광고: 리스트→상세 같은 자연스러운 전환 시점에만, 빈도 제한해서 노출.
@@ -15,16 +15,8 @@ let viewCount = 0;
 let lastShownAt = 0;
 let showing = false;
 
-function realSupported(): boolean {
-  try {
-    return loadFullScreenAd.isSupported() && showFullScreenAd.isSupported();
-  } catch {
-    return false;
-  }
-}
-
 function preload() {
-  if (!realSupported()) return;
+  if (!isFullScreenAdSupported()) return;
   loadFullScreenAd({
     options: { adGroupId: AD_IDS.interstitial },
     onEvent: (e) => {
@@ -38,7 +30,7 @@ function preload() {
 
 // 앱 시작 시 1회 호출 — 광고 미리 로드
 export function initInterstitial() {
-  if (realSupported()) {
+  if (isFullScreenAdSupported()) {
     preload();
     return;
   }
@@ -47,7 +39,7 @@ export function initInterstitial() {
 
 // 상세 진입 등 전환 시점에 호출 — 빈도 조건 충족 시에만 노출
 export function maybeShowInterstitial() {
-  const real = realSupported();
+  const real = isFullScreenAdSupported();
   if (!real && !AD_MOCK) return;
 
   viewCount += 1;

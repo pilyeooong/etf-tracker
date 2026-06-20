@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { List, ListRow as TdsListRow, Text, TextField } from '@toss/tds-mobile';
 import { colors } from '@toss/tds-colors';
 import { LoadMore } from '@/components/LoadMore';
@@ -7,7 +7,8 @@ import { MarketToggle } from '@/components/MarketToggle';
 import { CloseIcon } from '@/components/icons';
 import { useAsync } from '@/hooks/useAsync';
 import { useInfiniteList } from '@/hooks/useInfiniteList';
-import { fetchCompareData, fetchTopList, searchEtfs } from '@/lib/queries';
+import { useEtfSearch } from '@/hooks/useEtfSearch';
+import { fetchCompareData, fetchTopList } from '@/lib/queries';
 import { marketCap, pct, price, signColor } from '@/lib/format';
 import type { DetailBundle } from '@/lib/queries';
 import type { EtfListRow, Market } from '@/types/etf';
@@ -15,13 +16,19 @@ import type { EtfListRow, Market } from '@/types/etf';
 const MAX = 3;
 const PAGE = 30;
 
-// 추가 가능한 ETF 한 줄 (검색·둘러보기 공용)
-function PickRow({ row, onAdd }: { row: EtfListRow; onAdd: () => void }) {
+// 추가 가능한 ETF 한 줄 (검색·둘러보기 공용). 무한스크롤 누적 시 재렌더 방지를 위해 memo.
+const PickRow = memo(function PickRow({
+  row,
+  onAdd,
+}: {
+  row: EtfListRow;
+  onAdd: (code: string, name: string) => void;
+}) {
   return (
     <TdsListRow
       withTouchEffect
       horizontalPadding="small"
-      onClick={onAdd}
+      onClick={() => onAdd(row.code, row.etf_meta?.name ?? row.code)}
       contents={
         <div>
           <Text typography="t6" fontWeight="bold" color={colors.grey900}>
@@ -36,7 +43,7 @@ function PickRow({ row, onAdd }: { row: EtfListRow; onAdd: () => void }) {
       }
     />
   );
-}
+});
 
 interface Picked {
   code: string;
@@ -89,14 +96,12 @@ const METRICS: Metric[] = [
 
 export function ComparePage() {
   const [picked, setPicked] = useState<Picked[]>([]);
-  const [input, setInput] = useState('');
-  const [query, setQuery] = useState('');
-  const [tag, setTag] = useState<string | null>(null);
-  const [theme, setTheme] = useState<string | null>(null);
+  const { input, setInput, isSearching, result: search, submit, pickTheme, pickTag, theme, tag, reset } =
+    useEtfSearch();
 
-  const codes = picked.map((p) => p.code);
+  const codes = useMemo(() => picked.map((p) => p.code), [picked]);
   const codesKey = codes.join(',');
-  const isSearching = Boolean(query.trim() || tag || theme);
+  const pickedSet = useMemo(() => new Set(codes), [codesKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const canCompare = codes.length >= 2;
 
   const [browseMarket, setBrowseMarket] = useState<Market>('KR');
@@ -106,23 +111,34 @@ export function ComparePage() {
   );
   const browse = useInfiniteList(browseFetch, [browseMarket], PAGE);
 
-  const search = useAsync(() => searchEtfs(theme ?? query, tag), [query, tag, theme]);
   const compare = useAsync(
     () => (codes.length >= 2 ? fetchCompareData(codes) : Promise.resolve([])),
-    [codesKey],
+    [codesKey], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
-  const add = (code: string, name: string) => {
-    if (picked.length >= MAX || picked.some((p) => p.code === code)) return;
-    setPicked((cur) => [...cur, { code, name }]);
-    setInput('');
-    setQuery('');
-    setTag(null);
-    setTheme(null);
-  };
-  const remove = (code: string) => {
+  // 이미 담은 종목은 추천 리스트에서 제외(매 렌더 재계산 방지 + Set 조회)
+  const searchResults = useMemo(
+    () => (search.data ?? []).filter((r) => !pickedSet.has(r.code)),
+    [search.data, pickedSet],
+  );
+  const browseResults = useMemo(
+    () => browse.items.filter((r) => !pickedSet.has(r.code)),
+    [browse.items, pickedSet],
+  );
+
+  const add = useCallback(
+    (code: string, name: string) => {
+      setPicked((cur) => {
+        if (cur.length >= MAX || cur.some((p) => p.code === code)) return cur;
+        return [...cur, { code, name }];
+      });
+      reset();
+    },
+    [reset],
+  );
+  const remove = useCallback((code: string) => {
     setPicked((cur) => cur.filter((p) => p.code !== code));
-  };
+  }, []);
 
   return (
     <div style={{ padding: '20px 16px 88px', maxWidth: 560, margin: '0 auto' }}>
@@ -190,14 +206,7 @@ export function ComparePage() {
       {/* 검색 + 둘러보기로 추가 (3개 미만일 때) */}
       {picked.length < MAX && (
         <>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              setTag(null);
-              setTheme(null);
-              setQuery(input);
-            }}
-          >
+          <form onSubmit={submit}>
             <TextField
               variant="box"
               placeholder="비교할 ETF 검색 (예: KODEX 200)"
@@ -207,32 +216,15 @@ export function ComparePage() {
           </form>
 
           {/* 카테고리 칩 (공유 컴포넌트) */}
-          <FilterChips
-            activeTheme={theme}
-            activeTag={tag}
-            onPickTheme={(t) => {
-              setInput('');
-              setQuery('');
-              setTag(null);
-              setTheme((cur) => (cur === t ? null : t));
-            }}
-            onPickTag={(t) => {
-              setInput('');
-              setQuery('');
-              setTheme(null);
-              setTag((cur) => (cur === t ? null : t));
-            }}
-          />
+          <FilterChips activeTheme={theme} activeTag={tag} onPickTheme={pickTheme} onPickTag={pickTag} />
 
           {isSearching ? (
             // 검색 결과
             <div style={{ marginTop: 6 }}>
               <List>
-                {(search.data ?? [])
-                  .filter((r) => !codes.includes(r.code))
-                  .map((r) => (
-                    <PickRow key={r.code} row={r} onAdd={() => add(r.code, r.etf_meta?.name ?? r.code)} />
-                  ))}
+                {searchResults.map((r) => (
+                  <PickRow key={r.code} row={r} onAdd={add} />
+                ))}
               </List>
               {!search.loading && (search.data?.length ?? 0) === 0 && (
                 <div style={{ padding: '16px 0' }}>
@@ -247,11 +239,9 @@ export function ComparePage() {
             <>
               <MarketToggle market={browseMarket} onChange={setBrowseMarket} style={{ margin: '16px 0 8px' }} />
               <List>
-                {browse.items
-                  .filter((r) => !codes.includes(r.code))
-                  .map((r) => (
-                    <PickRow key={r.code} row={r} onAdd={() => add(r.code, r.etf_meta?.name ?? r.code)} />
-                  ))}
+                {browseResults.map((r) => (
+                  <PickRow key={r.code} row={r} onAdd={add} />
+                ))}
               </List>
               <LoadMore onVisible={browse.loadMore} hasMore={browse.hasMore} loading={browse.loadingMore} />
             </>

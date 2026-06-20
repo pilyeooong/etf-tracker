@@ -11,13 +11,19 @@ import type {
 const LIST_SELECT =
   'select=code,date,close,change_pct,premium_pct,volume,etf_meta!inner(name,category,tags,market,currency)';
 
-let _latestDate: string | null = null;
+// 최신 거래일 — in-flight Promise를 캐시해 콜드 상태 동시 호출의 중복 조회를 막음.
+// 실패 시 캐시를 비워 다음 호출이 재시도하도록 함.
+let _latestDate: Promise<string | null> | null = null;
 
-// 최신 거래일 (한 번 조회 후 캐시)
-export async function latestDate(): Promise<string | null> {
-  if (_latestDate) return _latestDate;
-  const rows = await selectFrom('etf_daily_quote', 'select=date&order=date.desc&limit=1');
-  _latestDate = rows.length > 0 ? rows[0].date : null;
+export function latestDate(): Promise<string | null> {
+  if (!_latestDate) {
+    _latestDate = selectFrom('etf_daily_quote', 'select=date&order=date.desc&limit=1')
+      .then((rows) => (rows.length > 0 ? rows[0].date : null))
+      .catch((e) => {
+        _latestDate = null;
+        throw e;
+      });
+  }
   return _latestDate;
 }
 
@@ -101,9 +107,20 @@ export interface DetailBundle {
   holdings: EtfHolding[];
 }
 
-// 비교용: 여러 종목의 상세 묶음을 한 번에
-export async function fetchCompareData(codes: string[]): Promise<DetailBundle[]> {
-  return Promise.all(codes.map(fetchDetailBundle));
+// 비교용: 여러 종목의 상세 묶음을 한 번에.
+// 종목별 Promise를 캐시해 비교 목록 변경 시 이미 받은 종목은 재요청하지 않음(EOD 데이터라 세션 내 안정).
+const _bundleCache = new Map<string, Promise<DetailBundle>>();
+export function fetchCompareData(codes: string[]): Promise<DetailBundle[]> {
+  return Promise.all(
+    codes.map((code) => {
+      let p = _bundleCache.get(code);
+      if (!p) {
+        p = fetchDetailBundle(code);
+        _bundleCache.set(code, p);
+      }
+      return p;
+    }),
+  );
 }
 
 // ── 심화 분석: 동종 그룹(기초지수 우선, 없으면 카테고리) 내 상대 위치 산출 ──

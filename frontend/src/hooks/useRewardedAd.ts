@@ -1,19 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { loadFullScreenAd, showFullScreenAd } from '@apps-in-toss/web-framework';
-import { AD_IDS, AD_MOCK } from '@/lib/ads';
+import { AD_IDS, AD_MOCK, isFullScreenAdSupported } from '@/lib/ads';
 import { showMockFullScreenAd } from '@/lib/mockAd';
 
 // 보상형 광고 (인앱 광고 2.0 ver2). 전면형과 동일 API, adGroupId로 타입 결정.
 // 미지원 환경(브라우저/구버전 토스앱)에서는 광고 없이 즉시 보상 처리(개발·폴백).
 export type RewardStatus = 'idle' | 'loading' | 'loaded' | 'showing' | 'rewarded' | 'error';
-
-function supported(): boolean {
-  try {
-    return loadFullScreenAd.isSupported() && showFullScreenAd.isSupported();
-  } catch {
-    return false;
-  }
-}
 
 export function useRewardedAd() {
   const [status, setStatus] = useState<RewardStatus>('idle');
@@ -22,7 +14,7 @@ export function useRewardedAd() {
 
   // 마운트 시 미리 로드
   useEffect(() => {
-    isSupported.current = supported();
+    isSupported.current = isFullScreenAdSupported();
     if (!isSupported.current) {
       setStatus('loaded'); // 미지원: 바로 보여줄 수 있는 상태(광고 생략)
       return;

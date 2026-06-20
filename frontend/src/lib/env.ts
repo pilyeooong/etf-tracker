@@ -4,14 +4,6 @@ export function isTossApp(): boolean {
      navigator.userAgent.includes('TossApp'));
 }
 
-export function isDev(): boolean {
-  return import.meta.env.DEV;
-}
-
-export function getApiBaseUrl(): string {
-  return import.meta.env.VITE_API_URL || '';
-}
-
 export function getSupabaseUrl(): string {
   return import.meta.env.VITE_SUPABASE_URL || '';
 }

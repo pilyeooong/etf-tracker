@@ -66,15 +66,6 @@ export interface EtfDetail {
   country_portfolio: PortfolioSlice[];
 }
 
-export interface EtfRisk {
-  code: string;
-  as_of: string;
-  return_1m: number | null;
-  return_3m: number | null;
-  return_6m: number | null;
-  return_1y: number | null;
-}
-
 export interface EtfHolding {
   code: string;
   stock_code: string;

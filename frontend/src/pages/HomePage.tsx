@@ -6,9 +6,9 @@ import { BannerSlot } from '@/components/BannerSlot';
 import { LoadMore } from '@/components/LoadMore';
 import { FilterChips } from '@/components/FilterChips';
 import { MarketToggle } from '@/components/MarketToggle';
-import { useAsync } from '@/hooks/useAsync';
 import { useInfiniteList } from '@/hooks/useInfiniteList';
-import { fetchTopList, searchEtfs, type ListMode } from '@/lib/queries';
+import { useEtfSearch } from '@/hooks/useEtfSearch';
+import { fetchTopList, type ListMode } from '@/lib/queries';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import type { Market } from '@/types/etf';
 
@@ -22,15 +22,9 @@ const PAGE = 30;
 export function HomePage() {
   const [market, setMarket] = useState<Market>('KR');
   const [mode, setMode] = useState<ListMode>('volume');
-  const [input, setInput] = useState('');
-  const [query, setQuery] = useState('');
-  const [tag, setTag] = useState<string | null>(null);
-  const [theme, setTheme] = useState<string | null>(null);
+  const { input, setInput, isSearching, result, submit, pickTheme, pickTag, theme, tag } =
+    useEtfSearch();
 
-  const isSearching = Boolean(query.trim() || tag || theme);
-
-  // 테마는 입력창을 채우지 않고 키워드로만 검색에 반영(활성 칩으로 표시)
-  const result = useAsync(() => searchEtfs(theme ?? query, tag), [query, tag, theme]);
   const fetchPage = useCallback(
     (offset: number) => fetchTopList(mode, market, PAGE, offset),
     [mode, market],
@@ -51,14 +45,7 @@ export function HomePage() {
       </div>
 
       {/* 검색 */}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          setTag(null);
-          setTheme(null);
-          setQuery(input);
-        }}
-      >
+      <form onSubmit={submit}>
         <TextField
           variant="box"
           placeholder="ETF 이름 또는 종목명 (예: 삼성전자, 반도체)"
@@ -68,22 +55,7 @@ export function HomePage() {
       </form>
 
       {/* 카테고리 칩 (공유 컴포넌트) */}
-      <FilterChips
-        activeTheme={theme}
-        activeTag={tag}
-        onPickTheme={(t) => {
-          setInput('');
-          setQuery('');
-          setTag(null);
-          setTheme((cur) => (cur === t ? null : t));
-        }}
-        onPickTag={(t) => {
-          setInput('');
-          setQuery('');
-          setTheme(null);
-          setTag((cur) => (cur === t ? null : t));
-        }}
-      />
+      <FilterChips activeTheme={theme} activeTag={tag} onPickTheme={pickTheme} onPickTag={pickTag} />
 
       {!isSupabaseConfigured() && (
         <Notice>Supabase 환경변수(VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY)를 설정하세요.</Notice>
