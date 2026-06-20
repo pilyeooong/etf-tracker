@@ -33,10 +33,12 @@ export function DonutChart({
   centerLabel?: string;
   centerSub?: string;
 }) {
-  const sum = data.reduce((acc, s) => acc + s.value, 0);
+  // 음수·NaN 슬라이스는 호 계산을 깨뜨리므로 유효한 양수만 사용
+  const clean = data.filter((s) => Number.isFinite(s.value) && s.value > 0);
+  const sum = clean.reduce((acc, s) => acc + s.value, 0);
   const remainder = Math.max(0, 100 - sum);
   const slices = [
-    ...data.map((s, i) => ({ ...s, color: PALETTE[i % PALETTE.length] })),
+    ...clean.map((s, i) => ({ ...s, color: PALETTE[i % PALETTE.length] })),
     ...(remainder > 0.5 ? [{ name: remainderLabel, value: remainder, color: REMAINDER_COLOR }] : []),
   ];
   const total = slices.reduce((acc, s) => acc + s.value, 0) || 1;

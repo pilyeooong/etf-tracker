@@ -99,8 +99,12 @@ def main() -> int:
         supabase_io.upsert("etf_meta", meta_patch, "code")
         supabase_io.upsert("etf_risk", risks, "code")
         supabase_io.upsert("etf_detail", details, "code")
-        supabase_io.delete_all("etf_holding")
-        supabase_io.upsert("etf_holding", holdings, "code,stock_code,stock_name")
+        # 구성종목이 0건이면(네이버 stage2 전면 실패) 전삭제를 건너뛰어 기존 데이터 보존.
+        if holdings:
+            supabase_io.delete_all("etf_holding")
+            supabase_io.upsert("etf_holding", holdings, "code,stock_code,stock_name")
+        else:
+            print("[stage2] 구성종목 0건 — 기존 holdings 보존(전삭제 skip)")
         print("[stage2] 적재 완료")
     else:
         print("[stage2] 생략")
